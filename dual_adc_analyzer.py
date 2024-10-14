@@ -13,6 +13,8 @@ from gui_components import create_widgets
 from plot_setup import setup_plot
 from data_processing import process_chunk
 from utils import CHUNK_SIZE, SAMPLE_RATE, DISPLAY_TIME, ANIMATION_SPEED
+from Animation import Animator
+
 
 class DualADCSignalAnalyzer:
     def __init__(self, root):
@@ -50,6 +52,14 @@ class DualADCSignalAnalyzer:
         self.processed_duration = 0
         self.current_time = 0
 
+
+        self.adc1_peak_times = deque()
+        self.adc1_peak_values = deque()
+        self.adc2_peak_times = deque()
+        self.adc2_peak_values = deque()
+
+        self.animator = Animator(self)
+
     def create_widgets(self):
         create_widgets(self)
 
@@ -63,10 +73,25 @@ class DualADCSignalAnalyzer:
                 preview_df = pd.read_csv(self.filepath, nrows=5)
                 if 'adc1' not in preview_df.columns or 'adc2' not in preview_df.columns:
                     raise ValueError("CSV file must contain 'adc1' and 'adc2' columns")
-                messagebox.showinfo("File Loaded", f"Loaded: {self.filepath}")
+
+                # Update the label with the filename
+                self.filename_label.config(text=f"Loaded: {self.filepath.split('/')[-1]}",fg="darkgreen",font=("Helvetica", 10, "bold"))  # Display only the filename
+
+                self.flash_label()
         except Exception as e:
             logging.error(f"Error loading file: {e}")
             messagebox.showerror("Error", str(e))
+
+    def flash_label(self, count=6):  # Flash 6 times
+               if count > 0:
+                # Toggle label color
+                current_color = self.filename_label.cget("fg")
+                new_color = "white" if current_color == "darkgreen" else "darkgreen"
+                self.filename_label.config(fg=new_color)
+
+                # Call this method again after 200ms
+                self.root.after(200, self.flash_label, count - 1)
+
 
     def process_data_thread(self):
         try:
@@ -93,77 +118,16 @@ class DualADCSignalAnalyzer:
         self.processed_duration += self.chunk_size / self.sample_rate
         self.root.update_idletasks()
 
-    def animate(self, frame):
-        if self.data_queue.empty():
-            return self.adc1_line, self.adc2_line, self.adc1_peaks, self.adc2_peaks
 
-        data = self.data_queue.get()
-
-        # Update buffers
-        self.adc1_buffer.extend(data['adc1'])
-        self.adc2_buffer.extend(data['adc2'])
-
-        # Update peak counts
-        self.adc1_peak_count += len(data['adc1_peaks'])
-        self.adc2_peak_count += len(data['adc2_peaks'])
-
-        # Write peak information to console
-        self.write_peak_info(data['adc1_peaks'], data['adc2_peaks'],
-                             data['adc1_peak_summary'], data['adc2_peak_summary'])
-
-        # Update statistics label
-        stats_text = f"Processed: {timedelta(seconds=int(self.processed_duration))} | "
-        stats_text += f"ADC1 Peaks: {self.adc1_peak_count} | ADC2 Peaks: {self.adc2_peak_count}"
-        self.stats_label.config(text=stats_text)
-
-        # Calculate time values for display buffer
-        self.current_time = self.processed_duration
-        start_time = max(0, self.current_time - self.display_time)
-        time_values = np.linspace(start_time, self.current_time, len(self.adc1_buffer))
-
-        # Update plots
-        self.adc1_line.set_data(time_values, list(self.adc1_buffer))
-        self.adc2_line.set_data(time_values, list(self.adc2_buffer))
-
-        # Update peak markers
-        adc1_peak_x = []
-        adc1_peak_y = []
-        adc2_peak_x = []
-        adc2_peak_y = []
-
-        if len(data['adc1_peaks']) > 0:
-            buffer_start_index = max(0, len(self.adc1_buffer) - len(data['adc1']))
-            for peak in data['adc1_peaks']:
-                adjusted_peak = buffer_start_index + peak
-                if adjusted_peak < len(self.adc1_buffer):
-                    adc1_peak_x.append(time_values[adjusted_peak])
-                    adc1_peak_y.append(self.adc1_buffer[adjusted_peak])
-
-        if len(data['adc2_peaks']) > 0:
-            buffer_start_index = max(0, len(self.adc2_buffer) - len(data['adc2']))
-            for peak in data['adc2_peaks']:
-                adjusted_peak = buffer_start_index + peak
-                if adjusted_peak < len(self.adc2_buffer):
-                    adc2_peak_x.append(time_values[adjusted_peak])
-                    adc2_peak_y.append(self.adc2_buffer[adjusted_peak])
-
-        self.adc1_peaks.set_data(adc1_peak_x, adc1_peak_y)
-        self.adc2_peaks.set_data(adc2_peak_x, adc2_peak_y)
-
-        # Adjust plot limits for 10-second window
-        for ax in [self.ax1, self.ax2]:
-            ax.set_xlim(start_time, self.current_time)
-
-        return self.adc1_line, self.adc2_line, self.adc1_peaks, self.adc2_peaks
 
     def write_peak_info(self, adc1_peaks, adc2_peaks, adc1_summary, adc2_summary):
         current_time = self.processed_duration
 
         # Print peak summaries
-        if adc1_summary:
-            print(f"Time: {current_time:.2f}s - {adc1_summary}")
-        if adc2_summary:
-            print(f"Time: {current_time:.2f}s - {adc2_summary}")
+        #if adc1_summary:
+         #   print(f"Time: {current_time:.2f}s - {adc1_summary}")
+        #if adc2_summary:
+         #   print(f"Time: {current_time:.2f}s - {adc2_summary}")
 
         # Print individual peak information
         if len(adc1_peaks) > 0:
@@ -171,14 +135,14 @@ class DualADCSignalAnalyzer:
                 peak_time = current_time - (len(self.adc1_buffer) - peak) / self.sample_rate
                 peak_value = self.adc1_buffer[peak]
                 print(f"ADC1 Peak at {peak_time:.2f}s: {peak_value:.2f}")
-
+                print("-" * 50)  # Print a separator line for better readability
         if len(adc2_peaks) > 0:
             for peak in adc2_peaks:
                 peak_time = current_time - (len(self.adc2_buffer) - peak) / self.sample_rate
                 peak_value = self.adc2_buffer[peak]
                 print(f"ADC2 Peak at {peak_time:.2f}s: {peak_value:.2f}")
+                print("-" * 50)  # Print a separator line for better readability
 
-        print("-" * 50)  # Print a separator line for better readability
 
     def start_analysis(self):
         if not self.filepath:
@@ -203,13 +167,7 @@ class DualADCSignalAnalyzer:
             processing_thread.start()
 
             # Start animation
-            self.ani = FuncAnimation(
-                self.fig,
-                self.animate,
-                interval=self.animation_speed,
-                blit=True,
-                cache_frame_data=False
-            )
+            self.animator.start_animation()
 
         except Exception as e:
             logging.error(f"Error starting analysis: {e}")
@@ -219,3 +177,41 @@ class DualADCSignalAnalyzer:
         self.stop_event.set()
         if hasattr(self, 'ani'):
             self.ani.event_source.stop()
+
+
+    def zoom(self, event):
+
+        zoom_factor = 0.9  # How much to zoom in/out with each scroll step
+        ax = event.inaxes
+
+        if ax is None:
+            return  # Ignore if we're not inside any axis
+
+        cur_xlim = ax.get_xlim()
+        cur_ylim = ax.get_ylim()
+
+        # Zoom in/out on x-axis
+        if event.button == 'up':  # Scroll up to zoom in
+            scale_factor = zoom_factor
+        elif event.button == 'down':  # Scroll down to zoom out
+            scale_factor = 1 / zoom_factor
+        else:
+            return  # Only handle scroll wheel (button = up/down)
+
+        # Get the current x and y position of the cursor in data coordinates
+        xdata = event.xdata
+        ydata = event.ydata
+
+        # Calculate new limits
+        new_xlim = [(xdata - (xdata - cur_xlim[0]) * scale_factor),
+                    (xdata + (cur_xlim[1] - xdata) * scale_factor)]
+        new_ylim = [(ydata - (ydata - cur_ylim[0]) * scale_factor),
+                    (ydata + (cur_ylim[1] - ydata) * scale_factor)]
+
+        # Set new limits
+        ax.set_xlim(new_xlim)
+        ax.set_ylim(new_ylim)
+
+        # Redraw the canvas to reflect the changes
+
+        self.fig.canvas.draw_idle()

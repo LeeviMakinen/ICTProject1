@@ -17,6 +17,10 @@ def create_widgets(self):
     self.threshold_slider.set(2.0)
     self.threshold_slider.pack(side=tk.LEFT)
 
+    self.filename_label = tk.Label(self.root, text="No file loaded", anchor='w')
+    self.filename_label.pack(side=tk.TOP, fill=tk.Y)  # Adjust position as needed
+
+
     stats_frame = ttk.Frame(self.root)
     stats_frame.pack(pady=5)
     self.stats_label = ttk.Label(stats_frame, text="Processed: 0s | ADC1 Peaks: 0 | ADC2 Peaks: 0")
