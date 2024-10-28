@@ -8,6 +8,7 @@ def create_widgets(self):
     ttk.Button(control_frame, text="Load Data File", command=self.load_file).pack(side=tk.LEFT, padx=5)
     ttk.Button(control_frame, text="Start Analysis", command=self.start_analysis).pack(side=tk.LEFT, padx=5)
     ttk.Button(control_frame, text="Stop Analysis", command=self.stop_analysis).pack(side=tk.LEFT, padx=5)
+    ttk.Button(control_frame, text="Continue Analysis", command=self.continue_analysis).pack(side=tk.LEFT, padx=5)
 
     threshold_frame = ttk.Frame(self.root)
     threshold_frame.pack(pady=5)

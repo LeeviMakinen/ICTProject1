@@ -1,4 +1,5 @@
 import tkinter as tk
+from contextlib import nullcontext
 from tkinter import filedialog, messagebox
 import threading
 from queue import Queue
@@ -41,6 +42,7 @@ class DualADCSignalAnalyzer:
         # Threading control
         self.stop_event = threading.Event()
         self.data_queue = Queue()
+        self.isStopped = None
 
         # Setup GUI and plots
         self.create_widgets()
@@ -59,6 +61,7 @@ class DualADCSignalAnalyzer:
         self.adc2_peak_values = deque()
 
         self.animator = Animator(self)
+
 
     def create_widgets(self):
         create_widgets(self)
@@ -150,6 +153,8 @@ class DualADCSignalAnalyzer:
             return
 
         try:
+            self.isStopped = False
+            print("starting analysis")
             self.stop_event.clear()
             self.adc1_peak_count = 0
             self.adc2_peak_count = 0
@@ -174,10 +179,26 @@ class DualADCSignalAnalyzer:
             messagebox.showerror("Error", str(e))
 
     def stop_analysis(self):
+
+
         self.stop_event.set()
+
+        print("stopping analysis")
+        self.isStopped = True
         if hasattr(self, 'ani'):
             self.ani.event_source.stop()
 
+    def continue_analysis(self):
+        if not self.filepath:
+            messagebox.showerror("Error", "Please load a file first!")
+            return
+
+        if self.isStopped == True:
+            self.isStopped = False
+            self.start_analysis()
+            self.animator.start_animation()
+        else:
+            messagebox.showerror("Error", "Analysis is not paused!")
 
     def zoom(self, event):
 
