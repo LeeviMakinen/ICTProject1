@@ -54,15 +54,19 @@ class Animator:
 
         for peak in data['adc1_peaks']:
             peak_time = time_values[buffer_start_index + peak]
+            peak_value = self.analyzer.adc1_buffer[buffer_start_index + peak]
             self.analyzer.adc1_peak_times.append(peak_time)
-            self.analyzer.adc1_peak_values.append(self.analyzer.adc1_buffer[buffer_start_index + peak])
+            self.analyzer.adc1_peak_values.append(peak_value)
+            print(f"ADC1 Peak at time {peak_time}: {peak_value}")  # Print statement for ADC1 peaks
 
         buffer_start_index = len(self.analyzer.adc2_buffer) - len(data['adc2'])
 
         for peak in data['adc2_peaks']:
             peak_time = time_values[buffer_start_index + peak]
+            peak_value = self.analyzer.adc2_buffer[buffer_start_index + peak]
             self.analyzer.adc2_peak_times.append(peak_time)
-            self.analyzer.adc2_peak_values.append(self.analyzer.adc2_buffer[buffer_start_index + peak])
+            self.analyzer.adc2_peak_values.append(peak_value)
+            print(f"ADC2 Peak at time {peak_time}: {peak_value}")  # Print statement for ADC2 peaks
 
     def update_statistics(self):
         stats_text = f"Processed: {timedelta(seconds=int(self.analyzer.processed_duration))} | "
