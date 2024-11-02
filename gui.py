@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import logging
+
 import numpy as np
-import pandas as pd
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from signal_processing import process_signal, find_signal_peaks
@@ -11,26 +11,26 @@ from file_operations import load_csv, convert_to_npy, load_npy
 class SignalAnalyzer:
     def __init__(self, root):
         self.root = root
-        self.root.title("Signal Analyzer with NPY Support")
+        self.root.title("Advanced Signal Analyzer")
         self.sample_rate = 50000  # 50kHz sampling rate
         self.setup_gui()
         self.data = None
 
     def setup_gui(self):
-        # Control Panel
-        control_frame = ttk.Frame(self.root)
-        control_frame.pack(pady=5, padx=5, fill=tk.X)
+        # Main container for all controls
+        control_container = ttk.Frame(self.root)
+        control_container.pack(pady=5, padx=5, fill=tk.X)
 
-        # File operations
-        file_frame = ttk.LabelFrame(control_frame, text="File Operations")
+        # Left side - File operations
+        file_frame = ttk.LabelFrame(control_container, text="File Operations")
         file_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
 
         ttk.Button(file_frame, text="Load CSV", command=self.load_csv).pack(side=tk.LEFT, padx=5)
         ttk.Button(file_frame, text="Convert to NPY", command=self.convert_to_npy).pack(side=tk.LEFT, padx=5)
         ttk.Button(file_frame, text="Load NPY", command=self.load_npy).pack(side=tk.LEFT, padx=5)
 
-        # Filter settings
-        filter_frame = ttk.LabelFrame(control_frame, text="Filter Settings")
+        # Center - Filter settings
+        filter_frame = ttk.LabelFrame(control_container, text="Filter Settings")
         filter_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
 
         ttk.Label(filter_frame, text="Window Length:").pack(side=tk.LEFT, padx=5)
@@ -43,22 +43,36 @@ class SignalAnalyzer:
         self.poly_order.insert(0, "3")
         self.poly_order.pack(side=tk.LEFT, padx=5)
 
-        # Peak detection settings
-        peak_frame = ttk.LabelFrame(control_frame, text="Peak Detection")
+        # Right side - Peak Detection Controls
+        peak_frame = ttk.LabelFrame(control_container, text="Peak Detection Parameters")
         peak_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
 
-        ttk.Label(peak_frame, text="Min Height:").pack(side=tk.LEFT, padx=5)
-        self.peak_height = ttk.Entry(peak_frame, width=6)
-        self.peak_height.insert(0, "800")
-        self.peak_height.pack(side=tk.LEFT, padx=5)
+        # Prominence control
+        ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
+        self.prominence_threshold = ttk.Entry(peak_frame, width=6)
+        self.prominence_threshold.insert(0, "20")
+        self.prominence_threshold.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(peak_frame, text="Min Distance:").pack(side=tk.LEFT, padx=5)
-        self.peak_distance = ttk.Entry(peak_frame, width=6)
-        self.peak_distance.insert(0, "1000")
-        self.peak_distance.pack(side=tk.LEFT, padx=5)
+        # Slope control
+        ttk.Label(peak_frame, text="Slope Factor:").pack(side=tk.LEFT, padx=5)
+        self.slope_factor = ttk.Entry(peak_frame, width=6)
+        self.slope_factor.insert(0, "1.5")
+        self.slope_factor.pack(side=tk.LEFT, padx=5)
+
+        # Timing tolerance control
+        ttk.Label(peak_frame, text="Timing Tolerance (%):").pack(side=tk.LEFT, padx=5)
+        self.timing_tolerance = ttk.Entry(peak_frame, width=6)
+        self.timing_tolerance.insert(0, "15")
+        self.timing_tolerance.pack(side=tk.LEFT, padx=5)
+
+        # Amplitude tolerance control
+        ttk.Label(peak_frame, text="Amp Tolerance (σ):").pack(side=tk.LEFT, padx=5)
+        self.amplitude_tolerance = ttk.Entry(peak_frame, width=6)
+        self.amplitude_tolerance.insert(0, "2.0")
+        self.amplitude_tolerance.pack(side=tk.LEFT, padx=5)
 
         # Update button
-        ttk.Button(control_frame, text="Update Analysis", command=self.update_analysis).pack(side=tk.LEFT, padx=5)
+        ttk.Button(control_container, text="Update Analysis", command=self.update_analysis).pack(side=tk.LEFT, padx=5)
 
         # Create the main figure and add toolbar
         self.setup_plots()
@@ -73,6 +87,8 @@ class SignalAnalyzer:
 
     def load_csv(self):
         self.data = load_csv()
+        if self.data is not None:
+            self.update_analysis()
 
     def convert_to_npy(self):
         if self.data is not None:
@@ -80,7 +96,22 @@ class SignalAnalyzer:
 
     def load_npy(self):
         self.data = load_npy()
-        self.update_analysis()
+        if self.data is not None:
+            self.update_analysis()
+
+    def get_peak_params(self):
+        """Get peak detection parameters from GUI inputs"""
+        try:
+            params = {
+                'prominence_threshold': float(self.prominence_threshold.get()) / 100.0,
+                'slope_factor': float(self.slope_factor.get()),
+                'timing_tolerance': float(self.timing_tolerance.get()) / 100.0,
+                'amplitude_tolerance': float(self.amplitude_tolerance.get())
+            }
+            return params
+        except ValueError as e:
+            messagebox.showerror("Error", f"Invalid parameter value: {str(e)}")
+            return None
 
     def update_analysis(self):
         if self.data is None:
@@ -90,30 +121,43 @@ class SignalAnalyzer:
         self.ax1.clear()
         self.ax2.clear()
 
+        # Get peak detection parameters
+        peak_params = self.get_peak_params()
+        if peak_params is None:
+            return
+
         # Downsample the data
-        downsample_rate = 5  # Change this value as needed
+        downsample_rate = 5
         downsampled_data = self.data.iloc[::downsample_rate]
 
         # Time vector (in seconds)
-        time = np.arange(len(downsampled_data)) / self.sample_rate
+        time = np.arange(len(downsampled_data)) / (self.sample_rate / downsample_rate)
 
         # Process signals
         filtered_adc1 = process_signal(downsampled_data['adc1'], self.window_length, self.poly_order)
         filtered_adc2 = process_signal(downsampled_data['adc2'], self.window_length, self.poly_order)
 
-        # Find peaks and log the results
-        peaks_adc1 = find_signal_peaks(filtered_adc1, self.peak_height, self.peak_distance, time)
-        peaks_adc2 = find_signal_peaks(filtered_adc2, self.peak_height, self.peak_distance, time)
+        # Find peaks with parameters
+        peaks_adc1, rejected_peaks_adc1 = find_signal_peaks(filtered_adc1, peak_params, time)
+        peaks_adc2, rejected_peaks_adc2 = find_signal_peaks(filtered_adc2, peak_params, time)
 
         # Plot ADC1
         self.ax1.plot(time, downsampled_data['adc1'], 'b-', alpha=0.3, label='Raw ADC1')
         self.ax1.plot(time, filtered_adc1, 'b-', label='Filtered ADC1')
-        self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx', label=f'Peaks ({len(peaks_adc1)})')
+        self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx',
+                      label=f'Valid Peaks ({len(peaks_adc1)})')  # Red for valid peaks
+        if rejected_peaks_adc1 is not None and len(rejected_peaks_adc1) > 0:
+            self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'rx',
+                          label=f'Rejected ({len(rejected_peaks_adc1)})')
 
         # Plot ADC2
         self.ax2.plot(time, downsampled_data['adc2'], 'g-', alpha=0.3, label='Raw ADC2')
         self.ax2.plot(time, filtered_adc2, 'g-', label='Filtered ADC2')
-        self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx', label=f'Peaks ({len(peaks_adc2)})')
+        self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx',
+                      label=f'Valid Peaks ({len(peaks_adc2)})')  # Red for valid peaks
+        if rejected_peaks_adc2 is not None and len(rejected_peaks_adc2) > 0:
+            self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'rx',
+                          label=f'Rejected ({len(rejected_peaks_adc2)})')
 
         # Set limits and labels
         self.ax1.set_title('ADC1 Signal Analysis')
@@ -126,4 +170,4 @@ class SignalAnalyzer:
             ax.legend()
 
         self.fig.tight_layout()
-        self.canvas.draw_idle()  # Use draw_idle for efficiency
+        self.canvas.draw_idle()

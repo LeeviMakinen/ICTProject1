@@ -1,5 +1,7 @@
-from scipy.signal import savgol_filter, find_peaks
+from scipy.signal import savgol_filter
 from tkinter import messagebox
+from peakAnalyzer import AdvancedPeakDetector
+
 
 def process_signal(signal_data, window_length, poly_order):
     try:
@@ -13,17 +15,29 @@ def process_signal(signal_data, window_length, poly_order):
         return signal_data
 
 
-def find_signal_peaks(signal_data, peak_height, peak_distance, time):
+def find_signal_peaks(signal_data, params, time):
     try:
-        height = float(peak_height.get())
-        distance = int(peak_distance.get())
-        peaks, _ = find_peaks(signal_data, height=height, distance=distance)
+        # Create detector instance
+        detector = AdvancedPeakDetector(sample_rate=50000, target_frequency=50)
 
-        # Print the peak values and their timestamps
-        for peak in peaks:
-            print(f"Peak detected: Value = {signal_data[peak]}, Timestamp = {time[peak]}")
+        # Update detector parameters
+        detector.min_prominence = params['prominence_threshold']
+        detector.slope_factor = params['slope_factor']
+        detector.timing_tolerance = params['timing_tolerance']
+        detector.amplitude_tolerance = params['amplitude_tolerance']
 
-        return peaks
-    except ValueError as e:
-        messagebox.showerror("Error", f"Invalid peak detection parameters: {str(e)}")
-        return []
+        # Detect peaks
+        peaks, properties = detector.detect_peaks(signal_data)
+
+        # Print analysis results
+        print("\nPeak Analysis Results:")
+        print(f"Number of peaks detected: {properties.get('peak_count', 0)}")
+        print(f"Detected frequency: {properties.get('actual_frequency', 0):.2f} Hz")
+        print(f"Mean peak interval: {properties.get('mean_interval', 0):.2f} samples")
+        print(f"Signal quality score: {properties.get('signal_quality', 0):.3f}")
+
+        return peaks, properties.get('rejected_peaks', [])
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Error in peak detection: {str(e)}")
+        return [], []
