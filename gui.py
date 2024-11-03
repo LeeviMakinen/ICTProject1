@@ -65,13 +65,13 @@ class SignalAnalyzer:
         # High threshold control
         ttk.Label(threshold_frame, text="High Peak Threshold:").pack(side=tk.LEFT, padx=5)
         self.high_threshold = ttk.Entry(threshold_frame, width=6)
-        self.high_threshold.insert(0, "0.8")
+        self.high_threshold.insert(0, "0.3")
         self.high_threshold.pack(side=tk.LEFT, padx=5)
 
         # Medium threshold control
         ttk.Label(threshold_frame, text="Medium Peak Threshold:").pack(side=tk.LEFT, padx=5)
         self.medium_threshold = ttk.Entry(threshold_frame, width=6)
-        self.medium_threshold.insert(0, "0.5")
+        self.medium_threshold.insert(0, "0.09")
         self.medium_threshold.pack(side=tk.LEFT, padx=5)
 
         # Update button

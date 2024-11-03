@@ -9,8 +9,8 @@ class AdvancedPeakDetector:
         self.target_frequency = target_frequency
         self.expected_period = int(sample_rate / target_frequency)
 
-    def detect_peaks(self, signal, min_prominence_pct=0.1, amplitude_tolerance=4.0, high_threshold=0.8,
-                     medium_threshold=0.5):
+    def detect_peaks(self, signal, min_prominence_pct=0.1, amplitude_tolerance=4.0, high_threshold=0.3,
+                     medium_threshold=0.09):
         """
         Enhanced peak detection algorithm with peak classification based on amplitude thresholds.
         """
