@@ -116,17 +116,17 @@ class SignalAnalyzer:
         if self.data is None:
             return
 
-        # Clear axes
-        self.ax1.clear()
-        self.ax2.clear()
+        # Clear previous lines on the axes
+        self.ax1.cla()
+        self.ax2.cla()
 
         # Get peak detection parameters
         peak_params = self.get_peak_params()
         if peak_params is None:
             return
 
-        # Downsample the data
-        downsample_rate = 5
+        # Increase downsample rate if needed
+        downsample_rate = 10
         downsampled_data = self.data.iloc[::downsample_rate]
 
         # Time vector (in seconds)
@@ -143,30 +143,23 @@ class SignalAnalyzer:
         # Plot ADC1
         self.ax1.plot(time, downsampled_data['adc1'], 'b-', alpha=0.3, label='Raw ADC1')
         self.ax1.plot(time, filtered_adc1, 'b-', label='Filtered ADC1')
-        self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx',
-                      label=f'Valid Peaks ({len(peaks_adc1)})')  # Red for valid peaks
+        self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx', label=f'Valid Peaks ({len(peaks_adc1)})')
         if rejected_peaks_adc1 is not None and len(rejected_peaks_adc1) > 0:
             self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'bx',
-                          label=f'Rejected ({len(rejected_peaks_adc1)})')  # Changed to blue 'bx'
+                          label=f'Rejected ({len(rejected_peaks_adc1)})')
 
         # Plot ADC2
         self.ax2.plot(time, downsampled_data['adc2'], 'g-', alpha=0.3, label='Raw ADC2')
         self.ax2.plot(time, filtered_adc2, 'g-', label='Filtered ADC2')
-        self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx',
-                      label=f'Valid Peaks ({len(peaks_adc2)})')  # Red for valid peaks
+        self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx', label=f'Valid Peaks ({len(peaks_adc2)})')
         if rejected_peaks_adc2 is not None and len(rejected_peaks_adc2) > 0:
             self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'bx',
-                          label=f'Rejected ({len(rejected_peaks_adc2)})')  # Changed to blue 'bx'
+                          label=f'Rejected ({len(rejected_peaks_adc2)})')
 
-        # Set limits and labels
-        self.ax1.set_title('ADC1 Signal Analysis')
-        self.ax2.set_title('ADC2 Signal Analysis')
-
+        # Set fixed legend location
         for ax in [self.ax1, self.ax2]:
-            ax.set_xlabel('Time (s)')
-            ax.set_ylabel('ADC Value')
-            ax.grid(True)
-            ax.legend()
+            ax.legend(loc="upper right")
 
+        # Refresh canvas
         self.fig.tight_layout()
         self.canvas.draw_idle()
