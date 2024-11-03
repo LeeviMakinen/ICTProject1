@@ -19,18 +19,20 @@ def find_signal_peaks(signal_data, params):
         peaks, properties = detector.detect_peaks(
             signal_data,
             min_prominence_pct=params['prominence_threshold'],
-            amplitude_tolerance=params['amplitude_tolerance']
+            amplitude_tolerance=params['amplitude_tolerance'],
+            high_threshold=params['high_threshold'],
+            medium_threshold=params['medium_threshold']
         )
 
         # Print analysis results
         print("\nPeak Analysis Results:")
-        print(f"Number of peaks detected: {properties.get('peak_count', 0)}")
-        print(f"Detected frequency: {properties.get('actual_frequency', 0):.2f} Hz")
-        print(f"Mean peak interval: {properties.get('mean_interval', 0):.2f} samples")
-        print(f"Signal quality score: {properties.get('signal_quality', 0):.3f}")
+        print(f"Number of peaks detected: {properties['peak_count']}")
+        print(f"Detected frequency: {properties['actual_frequency']:.2f} Hz")
+        print(f"Mean peak interval: {properties['mean_interval']:.2f} samples")
+        print(f"Signal quality score: {properties['signal_quality']:.3f}")
 
-        return peaks, properties.get('rejected_peaks', [])
+        return peaks, properties
 
     except Exception as e:
         messagebox.showerror("Error", f"Error in peak detection: {str(e)}")
-        return [], []
+        return [], {'rejected_peaks': [], 'peak_classifications': []}

@@ -59,6 +59,21 @@ class SignalAnalyzer:
         self.amplitude_tolerance.insert(0, "4.0")
         self.amplitude_tolerance.pack(side=tk.LEFT, padx=5)
 
+        threshold_frame = ttk.LabelFrame(control_container, text="Peak Classification Thresholds")
+        threshold_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
+
+        # High threshold control
+        ttk.Label(threshold_frame, text="High Peak Threshold:").pack(side=tk.LEFT, padx=5)
+        self.high_threshold = ttk.Entry(threshold_frame, width=6)
+        self.high_threshold.insert(0, "0.8")
+        self.high_threshold.pack(side=tk.LEFT, padx=5)
+
+        # Medium threshold control
+        ttk.Label(threshold_frame, text="Medium Peak Threshold:").pack(side=tk.LEFT, padx=5)
+        self.medium_threshold = ttk.Entry(threshold_frame, width=6)
+        self.medium_threshold.insert(0, "0.5")
+        self.medium_threshold.pack(side=tk.LEFT, padx=5)
+
         # Update button
         ttk.Button(control_container, text="Update Analysis", command=self.update_analysis).pack(side=tk.LEFT, padx=5)
 
@@ -91,7 +106,9 @@ class SignalAnalyzer:
         try:
             params = {
                 'prominence_threshold': float(self.prominence_threshold.get()),
-                'amplitude_tolerance': float(self.amplitude_tolerance.get())
+                'amplitude_tolerance': float(self.amplitude_tolerance.get()),
+                'high_threshold': float(self.high_threshold.get()),
+                'medium_threshold': float(self.medium_threshold.get())
             }
             return params
         except ValueError as e:
@@ -130,28 +147,72 @@ class SignalAnalyzer:
             filtered_adc2 = process_signal(downsampled_data['adc2'], window, poly_order)
 
             # Find peaks with parameters
-            peaks_adc1, rejected_peaks_adc1 = find_signal_peaks(filtered_adc1, peak_params)
-            peaks_adc2, rejected_peaks_adc2 = find_signal_peaks(filtered_adc2, peak_params)
+            peaks_adc1, properties_adc1 = find_signal_peaks(filtered_adc1, peak_params)
+            peaks_adc2, properties_adc2 = find_signal_peaks(filtered_adc2, peak_params)
 
             # Plot ADC1
             self.ax1.plot(time, downsampled_data['adc1'], 'b-', alpha=0.3, label='Raw ADC1')
             self.ax1.plot(time, filtered_adc1, 'b-', label='Filtered ADC1')
+
+            # Plot classified peaks for ADC1
             if len(peaks_adc1) > 0:
-                self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx',
-                              label=f'Valid Peaks ({len(peaks_adc1)})')
+                classifications = properties_adc1['peak_classifications']
+                if classifications:  # Check if classifications exist
+                    high_peaks = [p for p, c in zip(peaks_adc1, classifications) if c == 'high']
+                    medium_peaks = [p for p, c in zip(peaks_adc1, classifications) if c == 'medium']
+                    low_peaks = [p for p, c in zip(peaks_adc1, classifications) if c == 'low']
+
+                    if high_peaks:
+                        self.ax1.plot(time[high_peaks], filtered_adc1[high_peaks], 'x',
+                                      color='red', label=f'High Peaks ({len(high_peaks)})',
+                                      markersize=10)
+                    if medium_peaks:
+                        self.ax1.plot(time[medium_peaks], filtered_adc1[medium_peaks], 'x',
+                                      color='yellow', label=f'Medium Peaks ({len(medium_peaks)})',
+                                      markersize=8)
+                    if low_peaks:
+                        self.ax1.plot(time[low_peaks], filtered_adc1[low_peaks], 'x',
+                                      color='orange', label=f'Low Peaks ({len(low_peaks)})',
+                                      markersize=6)
+
+            # Plot rejected peaks for ADC1
+            rejected_peaks_adc1 = properties_adc1['rejected_peaks']
             if rejected_peaks_adc1 is not None and len(rejected_peaks_adc1) > 0:
-                self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'bx',
-                              label=f'Rejected ({len(rejected_peaks_adc1)})')
+                self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'x',
+                              color='blue', label=f'Rejected ({len(rejected_peaks_adc1)})',
+                              markersize=6)
 
             # Plot ADC2
             self.ax2.plot(time, downsampled_data['adc2'], 'g-', alpha=0.3, label='Raw ADC2')
             self.ax2.plot(time, filtered_adc2, 'g-', label='Filtered ADC2')
+
+            # Plot classified peaks for ADC2
             if len(peaks_adc2) > 0:
-                self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx',
-                              label=f'Valid Peaks ({len(peaks_adc2)})')
+                classifications = properties_adc2['peak_classifications']
+                if classifications:  # Check if classifications exist
+                    high_peaks = [p for p, c in zip(peaks_adc2, classifications) if c == 'high']
+                    medium_peaks = [p for p, c in zip(peaks_adc2, classifications) if c == 'medium']
+                    low_peaks = [p for p, c in zip(peaks_adc2, classifications) if c == 'low']
+
+                    if high_peaks:
+                        self.ax2.plot(time[high_peaks], filtered_adc2[high_peaks], 'x',
+                                      color='red', label=f'High Peaks ({len(high_peaks)})',
+                                      markersize=10)
+                    if medium_peaks:
+                        self.ax2.plot(time[medium_peaks], filtered_adc2[medium_peaks], 'x',
+                                      color='yellow', label=f'Medium Peaks ({len(medium_peaks)})',
+                                      markersize=8)
+                    if low_peaks:
+                        self.ax2.plot(time[low_peaks], filtered_adc2[low_peaks], 'x',
+                                      color='orange', label=f'Low Peaks ({len(low_peaks)})',
+                                      markersize=6)
+
+            # Plot rejected peaks for ADC2
+            rejected_peaks_adc2 = properties_adc2['rejected_peaks']
             if rejected_peaks_adc2 is not None and len(rejected_peaks_adc2) > 0:
-                self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'bx',
-                              label=f'Rejected ({len(rejected_peaks_adc2)})')
+                self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'x',
+                              color='blue', label=f'Rejected ({len(rejected_peaks_adc2)})',
+                              markersize=6)
 
             # Set fixed legend location
             for ax in [self.ax1, self.ax2]:
@@ -166,3 +227,4 @@ class SignalAnalyzer:
 
         except Exception as e:
             messagebox.showerror("Error", f"Error updating analysis: {str(e)}")
+            raise  # This will help with debugging by showing the full error traceback

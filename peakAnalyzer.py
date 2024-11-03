@@ -9,29 +9,49 @@ class AdvancedPeakDetector:
         self.target_frequency = target_frequency
         self.expected_period = int(sample_rate / target_frequency)
 
-    def detect_peaks(self, signal, min_prominence_pct=0.1, amplitude_tolerance=4.0):
+    def detect_peaks(self, signal, min_prominence_pct=0.1, amplitude_tolerance=4.0, high_threshold=0.8,
+                     medium_threshold=0.5):
         """
-        Enhanced peak detection algorithm with better handling of varying amplitudes.
+        Enhanced peak detection algorithm with peak classification based on amplitude thresholds.
         """
-        # Step 1: Initial signal preparation with baseline correction
         normalized = self._prepare_signal(signal)
-
-        # Step 2: Calculate adaptive threshold based on signal statistics
         signal_median = np.median(normalized)
         signal_iqr = np.percentile(normalized, 75) - np.percentile(normalized, 25)
         noise_floor = signal_median + signal_iqr * 0.5
 
-        # Step 3: Find initial peaks with dynamic thresholding
         peaks = self._find_initial_peaks(normalized, min_prominence_pct, noise_floor)
-
-        # Step 4: Filter peaks based on enhanced amplitude analysis
         peaks, rejected_peaks = self._filter_peaks(normalized, peaks, amplitude_tolerance)
 
-        # Calculate properties for the detected peaks
+        # Classify peaks by amplitude
+        peak_classifications = self._classify_peaks(normalized, peaks, high_threshold, medium_threshold)
+
         properties = self._calculate_properties(signal, peaks)
         properties['rejected_peaks'] = rejected_peaks
+        properties['peak_classifications'] = peak_classifications
 
         return peaks, properties
+
+    def _classify_peaks(self, signal, peaks, high_threshold, medium_threshold):
+        """Classify peaks based on amplitude thresholds"""
+        if len(peaks) == 0:
+            return []
+
+        peak_amplitudes = signal[peaks]
+        max_amplitude = np.max(peak_amplitudes)
+
+        # Normalize amplitudes relative to maximum
+        normalized_amplitudes = peak_amplitudes / max_amplitude
+
+        classifications = []
+        for amp in normalized_amplitudes:
+            if amp >= high_threshold:
+                classifications.append('high')
+            elif amp >= medium_threshold:
+                classifications.append('medium')
+            else:
+                classifications.append('low')
+
+        return classifications
 
     def _prepare_signal(self, signal):
         """Prepare signal with improved baseline correction"""
