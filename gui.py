@@ -35,12 +35,12 @@ class SignalAnalyzer:
 
         ttk.Label(filter_frame, text="Window Length:").pack(side=tk.LEFT, padx=5)
         self.window_length = ttk.Entry(filter_frame, width=6)
-        self.window_length.insert(0, "51")
+        self.window_length.insert(0, "31")  # Updated to better preserve peak shapes
         self.window_length.pack(side=tk.LEFT, padx=5)
 
         ttk.Label(filter_frame, text="Polynomial Order:").pack(side=tk.LEFT, padx=5)
         self.poly_order = ttk.Entry(filter_frame, width=4)
-        self.poly_order.insert(0, "3")
+        self.poly_order.insert(0, "2")  # Updated to minimize over-fitting
         self.poly_order.pack(side=tk.LEFT, padx=5)
 
         # Right side - Peak Detection Controls
@@ -50,25 +50,25 @@ class SignalAnalyzer:
         # Prominence control
         ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
         self.prominence_threshold = ttk.Entry(peak_frame, width=6)
-        self.prominence_threshold.insert(0, "20")
+        self.prominence_threshold.insert(0, "0.1")  # Updated to catch more peaks
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
 
         # Slope control
         ttk.Label(peak_frame, text="Slope Factor:").pack(side=tk.LEFT, padx=5)
         self.slope_factor = ttk.Entry(peak_frame, width=6)
-        self.slope_factor.insert(0, "1.5")
+        self.slope_factor.insert(0, "0.8")  # Updated to be more lenient on peak shapes
         self.slope_factor.pack(side=tk.LEFT, padx=5)
 
         # Timing tolerance control
         ttk.Label(peak_frame, text="Timing Tolerance (%):").pack(side=tk.LEFT, padx=5)
         self.timing_tolerance = ttk.Entry(peak_frame, width=6)
-        self.timing_tolerance.insert(0, "15")
+        self.timing_tolerance.insert(0, "20")  # Updated to be more flexible with timing
         self.timing_tolerance.pack(side=tk.LEFT, padx=5)
 
         # Amplitude tolerance control
         ttk.Label(peak_frame, text="Amp Tolerance (σ):").pack(side=tk.LEFT, padx=5)
         self.amplitude_tolerance = ttk.Entry(peak_frame, width=6)
-        self.amplitude_tolerance.insert(0, "2.0")
+        self.amplitude_tolerance.insert(0, "4.0")  # Updated to handle larger amplitude variations
         self.amplitude_tolerance.pack(side=tk.LEFT, padx=5)
 
         # Update button
@@ -87,8 +87,7 @@ class SignalAnalyzer:
 
     def load_csv(self):
         self.data = load_csv()
-        if self.data is not None:
-            self.update_analysis()
+
 
     def convert_to_npy(self):
         if self.data is not None:
@@ -147,8 +146,8 @@ class SignalAnalyzer:
         self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx',
                       label=f'Valid Peaks ({len(peaks_adc1)})')  # Red for valid peaks
         if rejected_peaks_adc1 is not None and len(rejected_peaks_adc1) > 0:
-            self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'rx',
-                          label=f'Rejected ({len(rejected_peaks_adc1)})')
+            self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'bx',
+                          label=f'Rejected ({len(rejected_peaks_adc1)})')  # Changed to blue 'bx'
 
         # Plot ADC2
         self.ax2.plot(time, downsampled_data['adc2'], 'g-', alpha=0.3, label='Raw ADC2')
@@ -156,8 +155,8 @@ class SignalAnalyzer:
         self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx',
                       label=f'Valid Peaks ({len(peaks_adc2)})')  # Red for valid peaks
         if rejected_peaks_adc2 is not None and len(rejected_peaks_adc2) > 0:
-            self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'rx',
-                          label=f'Rejected ({len(rejected_peaks_adc2)})')
+            self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'bx',
+                          label=f'Rejected ({len(rejected_peaks_adc2)})')  # Changed to blue 'bx'
 
         # Set limits and labels
         self.ax1.set_title('ADC1 Signal Analysis')
