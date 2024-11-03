@@ -9,8 +9,14 @@ class AdvancedPeakDetector:
         self.target_frequency = target_frequency
         self.expected_period = int(sample_rate / target_frequency)
 
-    def detect_peaks(self, signal, min_prominence_pct=0.1, amplitude_tolerance=4.0, high_threshold=0.3,
-                     medium_threshold=0.09):
+    def detect_peaks(
+        self,
+        signal,
+        min_prominence_pct=0.1,
+        amplitude_tolerance=4.0,
+        high_threshold=0.3,
+        medium_threshold=0.09,
+    ):
         """
         Enhanced peak detection algorithm with peak classification based on amplitude thresholds.
         """
@@ -20,14 +26,18 @@ class AdvancedPeakDetector:
         noise_floor = signal_median + signal_iqr * 0.5
 
         peaks = self._find_initial_peaks(normalized, min_prominence_pct, noise_floor)
-        peaks, rejected_peaks = self._filter_peaks(normalized, peaks, amplitude_tolerance)
+        peaks, rejected_peaks = self._filter_peaks(
+            normalized, peaks, amplitude_tolerance
+        )
 
         # Classify peaks by amplitude
-        peak_classifications = self._classify_peaks(normalized, peaks, high_threshold, medium_threshold)
+        peak_classifications = self._classify_peaks(
+            normalized, peaks, high_threshold, medium_threshold
+        )
 
         properties = self._calculate_properties(signal, peaks)
-        properties['rejected_peaks'] = rejected_peaks
-        properties['peak_classifications'] = peak_classifications
+        properties["rejected_peaks"] = rejected_peaks
+        properties["peak_classifications"] = peak_classifications
 
         return peaks, properties
 
@@ -45,11 +55,11 @@ class AdvancedPeakDetector:
         classifications = []
         for amp in normalized_amplitudes:
             if amp >= high_threshold:
-                classifications.append('high')
+                classifications.append("high")
             elif amp >= medium_threshold:
-                classifications.append('medium')
+                classifications.append("medium")
             else:
-                classifications.append('low')
+                classifications.append("low")
 
         return classifications
 
@@ -79,13 +89,13 @@ class AdvancedPeakDetector:
         # Dynamic prominence threshold
         min_prominence = max(
             signal_range * (min_prominence_pct / 100),
-            noise_floor * 2  # Ensure minimum separation from noise
+            noise_floor * 2,  # Ensure minimum separation from noise
         )
 
         # Find peaks with adaptive parameters
-        peaks, _ = find_peaks(signal,
-                              prominence=min_prominence,
-                              distance=int(self.expected_period * 0.5))
+        peaks, _ = find_peaks(
+            signal, prominence=min_prominence, distance=int(self.expected_period * 0.5)
+        )
 
         return peaks
 
@@ -99,10 +109,26 @@ class AdvancedPeakDetector:
 
         # Use rolling statistics for local amplitude variations
         window_size = min(20, len(amplitudes))
-        rolling_median = np.array([np.median(amplitudes[max(0, i - window_size):min(len(amplitudes), i + window_size)])
-                                   for i in range(len(amplitudes))])
-        rolling_std = np.array([np.std(amplitudes[max(0, i - window_size):min(len(amplitudes), i + window_size)])
-                                for i in range(len(amplitudes))])
+        rolling_median = np.array(
+            [
+                np.median(
+                    amplitudes[
+                        max(0, i - window_size) : min(len(amplitudes), i + window_size)
+                    ]
+                )
+                for i in range(len(amplitudes))
+            ]
+        )
+        rolling_std = np.array(
+            [
+                np.std(
+                    amplitudes[
+                        max(0, i - window_size) : min(len(amplitudes), i + window_size)
+                    ]
+                )
+                for i in range(len(amplitudes))
+            ]
+        )
 
         # Calculate adaptive thresholds
         lower_bound = rolling_median - rolling_std * amplitude_tolerance
@@ -130,9 +156,9 @@ class AdvancedPeakDetector:
         actual_frequency = self.sample_rate / np.mean(intervals)
 
         return {
-            'peak_count': len(peaks),
-            'mean_interval': np.mean(intervals),
-            'std_interval': np.std(intervals),
-            'actual_frequency': actual_frequency,
-            'signal_quality': 1.0 - (np.std(intervals) / np.mean(intervals))
+            "peak_count": len(peaks),
+            "mean_interval": np.mean(intervals),
+            "std_interval": np.std(intervals),
+            "actual_frequency": actual_frequency,
+            "signal_quality": 1.0 - (np.std(intervals) / np.mean(intervals)),
         }

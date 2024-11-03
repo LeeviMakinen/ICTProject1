@@ -10,6 +10,7 @@ def process_signal(signal_data, window_length, poly_order):
         messagebox.showerror("Error", f"Invalid filter parameters: {str(e)}")
         return signal_data
 
+
 def find_signal_peaks(signal_data, params):
     try:
         # Create detector instance
@@ -18,10 +19,10 @@ def find_signal_peaks(signal_data, params):
         # Detect peaks with the provided parameters
         peaks, properties = detector.detect_peaks(
             signal_data,
-            min_prominence_pct=params['prominence_threshold'],
-            amplitude_tolerance=params['amplitude_tolerance'],
-            high_threshold=params['high_threshold'],
-            medium_threshold=params['medium_threshold']
+            min_prominence_pct=params["prominence_threshold"],
+            amplitude_tolerance=params["amplitude_tolerance"],
+            high_threshold=params["high_threshold"],
+            medium_threshold=params["medium_threshold"],
         )
 
         # Print analysis results
@@ -35,4 +36,4 @@ def find_signal_peaks(signal_data, params):
 
     except Exception as e:
         messagebox.showerror("Error", f"Error in peak detection: {str(e)}")
-        return [], {'rejected_peaks': [], 'peak_classifications': []}
+        return [], {"rejected_peaks": [], "peak_classifications": []}
