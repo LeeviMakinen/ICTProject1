@@ -35,12 +35,12 @@ class SignalAnalyzer:
 
         ttk.Label(filter_frame, text="Window Length:").pack(side=tk.LEFT, padx=5)
         self.window_length = ttk.Entry(filter_frame, width=6)
-        self.window_length.insert(0, "31")  # Updated to better preserve peak shapes
+        self.window_length.insert(0, "31")
         self.window_length.pack(side=tk.LEFT, padx=5)
 
         ttk.Label(filter_frame, text="Polynomial Order:").pack(side=tk.LEFT, padx=5)
         self.poly_order = ttk.Entry(filter_frame, width=4)
-        self.poly_order.insert(0, "2")  # Updated to minimize over-fitting
+        self.poly_order.insert(0, "2")
         self.poly_order.pack(side=tk.LEFT, padx=5)
 
         # Right side - Peak Detection Controls
@@ -50,25 +50,13 @@ class SignalAnalyzer:
         # Prominence control
         ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
         self.prominence_threshold = ttk.Entry(peak_frame, width=6)
-        self.prominence_threshold.insert(0, "0.1")  # Updated to catch more peaks
+        self.prominence_threshold.insert(0, "0.1")
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
-
-        # Slope control
-        ttk.Label(peak_frame, text="Slope Factor:").pack(side=tk.LEFT, padx=5)
-        self.slope_factor = ttk.Entry(peak_frame, width=6)
-        self.slope_factor.insert(0, "0.8")  # Updated to be more lenient on peak shapes
-        self.slope_factor.pack(side=tk.LEFT, padx=5)
-
-        # Timing tolerance control
-        ttk.Label(peak_frame, text="Timing Tolerance (%):").pack(side=tk.LEFT, padx=5)
-        self.timing_tolerance = ttk.Entry(peak_frame, width=6)
-        self.timing_tolerance.insert(0, "20")  # Updated to be more flexible with timing
-        self.timing_tolerance.pack(side=tk.LEFT, padx=5)
 
         # Amplitude tolerance control
         ttk.Label(peak_frame, text="Amp Tolerance (σ):").pack(side=tk.LEFT, padx=5)
         self.amplitude_tolerance = ttk.Entry(peak_frame, width=6)
-        self.amplitude_tolerance.insert(0, "4.0")  # Updated to handle larger amplitude variations
+        self.amplitude_tolerance.insert(0, "4.0")
         self.amplitude_tolerance.pack(side=tk.LEFT, padx=5)
 
         # Update button
@@ -102,9 +90,7 @@ class SignalAnalyzer:
         """Get peak detection parameters from GUI inputs"""
         try:
             params = {
-                'prominence_threshold': float(self.prominence_threshold.get()) / 100.0,
-                'slope_factor': float(self.slope_factor.get()),
-                'timing_tolerance': float(self.timing_tolerance.get()) / 100.0,
+                'prominence_threshold': float(self.prominence_threshold.get()),
                 'amplitude_tolerance': float(self.amplitude_tolerance.get())
             }
             return params
@@ -116,50 +102,67 @@ class SignalAnalyzer:
         if self.data is None:
             return
 
-        # Clear previous lines on the axes
-        self.ax1.cla()
-        self.ax2.cla()
+        try:
+            # Get filter parameters
+            window = int(self.window_length.get())
+            if window % 2 == 0:
+                window += 1
+            poly_order = int(self.poly_order.get())
 
-        # Get peak detection parameters
-        peak_params = self.get_peak_params()
-        if peak_params is None:
-            return
+            # Clear previous lines on the axes
+            self.ax1.cla()
+            self.ax2.cla()
 
-        # Increase downsample rate if needed
-        downsample_rate = 10
-        downsampled_data = self.data.iloc[::downsample_rate]
+            # Get peak detection parameters
+            peak_params = self.get_peak_params()
+            if peak_params is None:
+                return
 
-        # Time vector (in seconds)
-        time = np.arange(len(downsampled_data)) / (self.sample_rate / downsample_rate)
+            # Increase downsample rate if needed
+            downsample_rate = 10
+            downsampled_data = self.data.iloc[::downsample_rate]
 
-        # Process signals
-        filtered_adc1 = process_signal(downsampled_data['adc1'], self.window_length, self.poly_order)
-        filtered_adc2 = process_signal(downsampled_data['adc2'], self.window_length, self.poly_order)
+            # Time vector (in seconds)
+            time = np.arange(len(downsampled_data)) / (self.sample_rate / downsample_rate)
 
-        # Find peaks with parameters
-        peaks_adc1, rejected_peaks_adc1 = find_signal_peaks(filtered_adc1, peak_params, time)
-        peaks_adc2, rejected_peaks_adc2 = find_signal_peaks(filtered_adc2, peak_params, time)
+            # Process signals
+            filtered_adc1 = process_signal(downsampled_data['adc1'], window, poly_order)
+            filtered_adc2 = process_signal(downsampled_data['adc2'], window, poly_order)
 
-        # Plot ADC1
-        self.ax1.plot(time, downsampled_data['adc1'], 'b-', alpha=0.3, label='Raw ADC1')
-        self.ax1.plot(time, filtered_adc1, 'b-', label='Filtered ADC1')
-        self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx', label=f'Valid Peaks ({len(peaks_adc1)})')
-        if rejected_peaks_adc1 is not None and len(rejected_peaks_adc1) > 0:
-            self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'bx',
-                          label=f'Rejected ({len(rejected_peaks_adc1)})')
+            # Find peaks with parameters
+            peaks_adc1, rejected_peaks_adc1 = find_signal_peaks(filtered_adc1, peak_params)
+            peaks_adc2, rejected_peaks_adc2 = find_signal_peaks(filtered_adc2, peak_params)
 
-        # Plot ADC2
-        self.ax2.plot(time, downsampled_data['adc2'], 'g-', alpha=0.3, label='Raw ADC2')
-        self.ax2.plot(time, filtered_adc2, 'g-', label='Filtered ADC2')
-        self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx', label=f'Valid Peaks ({len(peaks_adc2)})')
-        if rejected_peaks_adc2 is not None and len(rejected_peaks_adc2) > 0:
-            self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'bx',
-                          label=f'Rejected ({len(rejected_peaks_adc2)})')
+            # Plot ADC1
+            self.ax1.plot(time, downsampled_data['adc1'], 'b-', alpha=0.3, label='Raw ADC1')
+            self.ax1.plot(time, filtered_adc1, 'b-', label='Filtered ADC1')
+            if len(peaks_adc1) > 0:
+                self.ax1.plot(time[peaks_adc1], filtered_adc1[peaks_adc1], 'rx',
+                              label=f'Valid Peaks ({len(peaks_adc1)})')
+            if rejected_peaks_adc1 is not None and len(rejected_peaks_adc1) > 0:
+                self.ax1.plot(time[rejected_peaks_adc1], filtered_adc1[rejected_peaks_adc1], 'bx',
+                              label=f'Rejected ({len(rejected_peaks_adc1)})')
 
-        # Set fixed legend location
-        for ax in [self.ax1, self.ax2]:
-            ax.legend(loc="upper right")
+            # Plot ADC2
+            self.ax2.plot(time, downsampled_data['adc2'], 'g-', alpha=0.3, label='Raw ADC2')
+            self.ax2.plot(time, filtered_adc2, 'g-', label='Filtered ADC2')
+            if len(peaks_adc2) > 0:
+                self.ax2.plot(time[peaks_adc2], filtered_adc2[peaks_adc2], 'rx',
+                              label=f'Valid Peaks ({len(peaks_adc2)})')
+            if rejected_peaks_adc2 is not None and len(rejected_peaks_adc2) > 0:
+                self.ax2.plot(time[rejected_peaks_adc2], filtered_adc2[rejected_peaks_adc2], 'bx',
+                              label=f'Rejected ({len(rejected_peaks_adc2)})')
 
-        # Refresh canvas
-        self.fig.tight_layout()
-        self.canvas.draw_idle()
+            # Set fixed legend location
+            for ax in [self.ax1, self.ax2]:
+                ax.legend(loc="upper right")
+                ax.set_xlabel('Time (s)')
+                ax.set_ylabel('Amplitude')
+                ax.grid(True)
+
+            # Refresh canvas
+            self.fig.tight_layout()
+            self.canvas.draw_idle()
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Error updating analysis: {str(e)}")

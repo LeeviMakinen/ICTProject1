@@ -5,29 +5,22 @@ from peakAnalyzer import AdvancedPeakDetector
 
 def process_signal(signal_data, window_length, poly_order):
     try:
-        window = int(window_length.get())
-        if window % 2 == 0:
-            window += 1
-        polyorder = int(poly_order.get())
-        return savgol_filter(signal_data, window, polyorder)
+        return savgol_filter(signal_data, window_length, poly_order)
     except ValueError as e:
         messagebox.showerror("Error", f"Invalid filter parameters: {str(e)}")
         return signal_data
 
-
-def find_signal_peaks(signal_data, params, time):
+def find_signal_peaks(signal_data, params):
     try:
         # Create detector instance
         detector = AdvancedPeakDetector(sample_rate=50000, target_frequency=50)
 
-        # Update detector parameters
-        detector.min_prominence = params['prominence_threshold']
-        detector.slope_factor = params['slope_factor']
-        detector.timing_tolerance = params['timing_tolerance']
-        detector.amplitude_tolerance = params['amplitude_tolerance']
-
-        # Detect peaks
-        peaks, properties = detector.detect_peaks(signal_data)
+        # Detect peaks with the provided parameters
+        peaks, properties = detector.detect_peaks(
+            signal_data,
+            min_prominence_pct=params['prominence_threshold'],
+            amplitude_tolerance=params['amplitude_tolerance']
+        )
 
         # Print analysis results
         print("\nPeak Analysis Results:")
