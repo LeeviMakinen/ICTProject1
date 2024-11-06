@@ -4,7 +4,7 @@ from scipy.stats import zscore
 
 
 class AdvancedPeakDetector:
-    def __init__(self, sample_rate=50000, target_frequency=100):
+    def __init__(self, sample_rate=50000, target_frequency=2):
         self.sample_rate = sample_rate
         self.target_frequency = target_frequency
         self.expected_period = int(sample_rate / target_frequency)

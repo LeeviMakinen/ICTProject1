@@ -14,7 +14,7 @@ def process_signal(signal_data, window_length, poly_order):
 def find_signal_peaks(signal_data, params):
     try:
         # Create detector instance
-        detector = AdvancedPeakDetector(sample_rate=50000, target_frequency=50)
+        detector = AdvancedPeakDetector(sample_rate=50000, target_frequency=2)
 
         # Detect peaks with the provided parameters
         peaks, properties = detector.detect_peaks(
