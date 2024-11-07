@@ -1,9 +1,7 @@
 import numpy as np
-from scipy.signal import savgol_filter, hilbert, peak_prominences, find_peaks
-from scipy.stats import zscore
+from scipy.signal import savgol_filter, find_peaks
 
-
-class AdvancedPeakDetector:
+class PeakDetector:
     def __init__(self, sample_rate=50000, target_frequency=2):
         self.sample_rate = sample_rate
         self.target_frequency = target_frequency

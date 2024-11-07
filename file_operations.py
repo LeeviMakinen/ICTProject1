@@ -4,8 +4,6 @@ from tkinter import filedialog, messagebox
 import logging
 
 
-
-
 def load_csv():
     filepath = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     filename = filepath.title()

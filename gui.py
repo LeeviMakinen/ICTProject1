@@ -1,13 +1,9 @@
 import os.path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-
 import numpy as np
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-
-import file_operations
 from signal_processing import process_signal, find_signal_peaks
 from file_operations import load_csv, convert_to_npy, load_npy
 
@@ -17,7 +13,7 @@ class SignalAnalyzer:
         self.title_label = None
         self.convert_button = None
         self.root = root
-        self.root.title("Advanced Signal Analyzer")
+        self.root.title("Signal Processing App")
         self.sample_rate = 50000  # 50kHz sampling rate
         self.setup_gui()
         self.data = None
@@ -25,7 +21,7 @@ class SignalAnalyzer:
 
     def setup_gui(self):
 
-        self.title_label = ttk.Label(self.root, text="Advanced Signal Analyzer", font=("Helvetica", 16), foreground="blue")
+        self.title_label = ttk.Label(self.root, text="Signal Processing App", font=("Helvetica", 16), foreground="black")
         self.title_label.pack(pady=5)
 
         #Custom title card for more control over colors
