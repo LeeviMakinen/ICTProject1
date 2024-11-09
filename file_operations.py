@@ -8,7 +8,7 @@ def load_csv():
     filepath = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     filename = filepath.title()
     if not filepath:
-        return None,None
+        return None, None
 
     try:
         data = pd.read_csv(filepath)
@@ -30,15 +30,17 @@ def convert_to_npy(data):
         return
 
     try:
+        # Convert to float16 first for any calculations, then to int16 for saving
         np_array = np.column_stack(
             (
                 data["adc1"].astype("float16").values,
                 data["adc2"].astype("float16").values,
             )
         )
+        # Convert to int16 before saving
+        np_array = np_array.astype("int16")
         np.save(save_path, np_array)
         messagebox.showinfo("Success", "File saved successfully")
-
 
     except Exception as e:
         logging.error(f"Error saving NPY file: {e}")
@@ -49,10 +51,12 @@ def load_npy():
     filepath = filedialog.askopenfilename(filetypes=[("NumPy files", "*.npy")])
     filename = filepath.title()
     if not filepath:
-        return None,None
+        return None, None
 
     try:
+        # Load as int16 first
         np_array = np.load(filepath)
+        # Convert to float16 for processing
         np_array = pd.DataFrame(np_array, columns=["adc1", "adc2"]).astype(
             {"adc1": "float16", "adc2": "float16"})
         return np_array, filename
@@ -60,4 +64,4 @@ def load_npy():
     except Exception as e:
         logging.error(f"Error loading NPY file: {e}")
         messagebox.showerror("Error", str(e))
-        return None
+        return None, None
