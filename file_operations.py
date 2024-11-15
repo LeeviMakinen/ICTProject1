@@ -30,11 +30,11 @@ def convert_to_npy(data):
         return
 
     try:
-        # Convert to float16 first for any calculations, then to int16 for saving
+        # Convert to float32 first for any calculations, then to int16 for saving
         np_array = np.column_stack(
             (
-                data["adc1"].astype("float16").values,
-                data["adc2"].astype("float16").values,
+                data["adc1"].astype("float32").values,
+                data["adc2"].astype("float32").values,
             )
         )
         # Convert to int16 before saving
@@ -56,9 +56,9 @@ def load_npy():
     try:
         # Load as int16 first
         np_array = np.load(filepath)
-        # Convert to float16 for processing
+        # Convert to float32 for processing
         np_array = pd.DataFrame(np_array, columns=["adc1", "adc2"]).astype(
-            {"adc1": "float16", "adc2": "float16"})
+            {"adc1": "float32", "adc2": "float32"})
         return np_array, filename
 
     except Exception as e:

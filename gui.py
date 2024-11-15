@@ -145,17 +145,36 @@ class SignalAnalyzer:
         if self.data is not None:
             convert_to_npy(self.data)
 
-
-
     def load_npy(self):
-        self.data,self.filename = load_npy()
+        self.data, self.filename = load_npy()
         self.filename = os.path.basename(self.filename)
         self.root.title(f"Advanced Signal Analyzer - {self.filename}")
         self.title_label.config(text=f"Advanced Signal Analyzer - {self.filename}")
 
+        if self.data is None:
+            return
 
-        if self.data is not None:
-            self.update_analysis()
+        # Clear previous lines on the axes
+        self.ax1.cla()
+        self.ax2.cla()
+
+        # Increase downsample rate if needed
+        downsample_rate = 10
+        downsampled_data = self.data.iloc[::downsample_rate]
+
+        # Time vector (in seconds)
+        time = np.arange(len(downsampled_data)) / (
+                self.sample_rate / downsample_rate
+        )
+
+        # Plot raw ADC1 and ADC2 data
+        self.ax1.plot(time, downsampled_data["adc1"], "b-", label="ADC1")
+        self.ax2.plot(time, downsampled_data["adc2"], "g-", label="ADC2")
+
+        # Refresh canvas
+        self.fig.tight_layout()
+        self.canvas.draw_idle()
+
 
     def get_peak_params(self):
         """Get peak detection parameters from GUI inputs"""
@@ -439,6 +458,3 @@ class SignalAnalyzer:
 
         except Exception as e: #Whoopsie daisies moment
             messagebox.showerror("Error", f"Error exporting peaks: {str(e)}")
-
-
-
