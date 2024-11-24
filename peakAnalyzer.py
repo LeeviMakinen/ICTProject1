@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import savgol_filter, find_peaks
 
+
 class PeakDetector:
     def __init__(self, sample_rate=50000, target_frequency=2):
         self.sample_rate = sample_rate

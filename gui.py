@@ -1,6 +1,6 @@
 import os.path
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox, HORIZONTAL
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -19,12 +19,20 @@ class SignalAnalyzer:
         self.data = None
         self.filename = None
 
+        self.data_type = None
+        self.peaks_data = None
+
     def setup_gui(self):
 
-        self.title_label = ttk.Label(self.root, text="Signal Processing App", font=("Helvetica", 16), foreground="black")
+        self.title_label = ttk.Label(
+            self.root,
+            text="Signal Processing App",
+            font=("Helvetica", 16),
+            foreground="black",
+        )
         self.title_label.pack(pady=5)
 
-        #Custom title card for more control over colors
+        # Custom title card for more control over colors
 
         # Main container for all controls
         control_container = ttk.Frame(self.root)
@@ -38,10 +46,11 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
 
-        #Defining the conversion button for specific actions in a later function
-        self.convert_button = ttk.Button(file_frame, text="Convert to NPY", command=self.start_convert_to_npy)
-        self.convert_button.pack(side=tk.LEFT,padx=5)
-
+        # Defining the conversion button for specific actions in a later function
+        self.convert_button = ttk.Button(
+            file_frame, text="Convert to NPY", command=self.start_convert_to_npy
+        )
+        self.convert_button.pack(side=tk.LEFT, padx=5)
 
         ttk.Button(file_frame, text="Load NPY", command=self.load_npy).pack(
             side=tk.LEFT, padx=5
@@ -52,13 +61,17 @@ class SignalAnalyzer:
         filter_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
 
         ttk.Label(filter_frame, text="Window Length:").pack(side=tk.LEFT, padx=5)
-        self.window_length = ttk.Entry(filter_frame, width=6)
-        self.window_length.insert(0, "31")
+        self.window_length = tk.Scale(
+            filter_frame, from_=3, to=101, resolution=2, orient=HORIZONTAL
+        )
+        self.window_length.set(31)  # Default value
         self.window_length.pack(side=tk.LEFT, padx=5)
 
         ttk.Label(filter_frame, text="Polynomial Order:").pack(side=tk.LEFT, padx=5)
-        self.poly_order = ttk.Entry(filter_frame, width=4)
-        self.poly_order.insert(0, "2")
+        self.poly_order = tk.Scale(
+            filter_frame, from_=1, to=5, resolution=1, orient=HORIZONTAL
+        )
+        self.poly_order.set(2)  # Default value
         self.poly_order.pack(side=tk.LEFT, padx=5)
 
         # Right side - Peak Detection Controls
@@ -67,14 +80,17 @@ class SignalAnalyzer:
 
         # Prominence control
         ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
-        self.prominence_threshold = ttk.Entry(peak_frame, width=6)
-        self.prominence_threshold.insert(0, "0.1")
+        self.prominence_threshold = tk.Scale(
+            peak_frame, from_=0.1, to=10.0, resolution=0.1, orient=HORIZONTAL
+        )
+        self.prominence_threshold.set(0.1)
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
 
-        # Amplitude tolerance control
         ttk.Label(peak_frame, text="Amp Tolerance (σ):").pack(side=tk.LEFT, padx=5)
-        self.amplitude_tolerance = ttk.Entry(peak_frame, width=6)
-        self.amplitude_tolerance.insert(0, "4.0")
+        self.amplitude_tolerance = tk.Scale(
+            peak_frame, from_=1.0, to=10.0, resolution=0.1, orient=HORIZONTAL
+        )
+        self.amplitude_tolerance.set(4.0)
         self.amplitude_tolerance.pack(side=tk.LEFT, padx=5)
 
         threshold_frame = ttk.LabelFrame(
@@ -83,25 +99,36 @@ class SignalAnalyzer:
         threshold_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
 
         # High threshold control
-        ttk.Label(threshold_frame, text="High Peak Threshold:").pack(
+        ttk.Label(threshold_frame, text="High Peak Threshold:\n(% of max)").pack(
             side=tk.LEFT, padx=5
         )
-        self.high_threshold = ttk.Entry(threshold_frame, width=6)
-        self.high_threshold.insert(0, "0.3")
+        self.high_threshold = tk.Scale(
+            threshold_frame, from_=10, to=100, resolution=1, orient=HORIZONTAL
+        )
+        self.high_threshold.set(30)  # Default value
         self.high_threshold.pack(side=tk.LEFT, padx=5)
 
         # Medium threshold control
-        ttk.Label(threshold_frame, text="Medium Peak Threshold:").pack(
+        ttk.Label(threshold_frame, text="Medium Peak Threshold:\n(% of max)").pack(
             side=tk.LEFT, padx=5
         )
-        self.medium_threshold = ttk.Entry(threshold_frame, width=6)
-        self.medium_threshold.insert(0, "0.09")
+        self.medium_threshold = tk.Scale(
+            threshold_frame, from_=1, to=50, resolution=1, orient=HORIZONTAL
+        )
+        self.medium_threshold.set(9)  # Default value
         self.medium_threshold.pack(side=tk.LEFT, padx=5)
 
+        action_frame = ttk.Frame(control_container)
+        action_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
         # Update button
         ttk.Button(
-            control_container, text="Update Analysis", command=self.update_analysis
-        ).pack(side=tk.LEFT, padx=5)
+            action_frame, text="Update Analysis", command=self.update_analysis
+        ).pack(side=tk.TOP, padx=5)
+
+        reset_button = ttk.Button(
+            action_frame, text="Reset Defaults", command=self.reset_to_defaults
+        )
+        reset_button.pack(side=tk.TOP, padx=5, pady=5)
 
         ttk.Button(file_frame, text="Export Peaks", command=self.export_peaks).pack(
             side=tk.LEFT, padx=5
@@ -119,15 +146,80 @@ class SignalAnalyzer:
         self.toolbar.update()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
+    def reset_to_defaults(self):
+
+        # Set default values for each parameter
+        default_values = {
+            "window_length": 31,
+            "poly_order": 2,
+            "prominence_threshold": 0.1,
+            "amplitude_tolerance": 4.0,
+            "high_threshold": 30,
+            "medium_threshold": 9,
+        }
+
+        # Reset sliders
+        self.window_length.set(default_values["window_length"])
+        self.poly_order.set(default_values["poly_order"])
+        self.prominence_threshold.set(default_values["prominence_threshold"])
+        self.amplitude_tolerance.set(default_values["amplitude_tolerance"])
+        self.high_threshold.set(default_values["high_threshold"])
+        self.medium_threshold.set(default_values["medium_threshold"])
+
     def load_csv(self):
-        self.data,self.filename = load_csv()
-        self.filename = os.path.basename(self.filename)
+        """Load CSV file and handle both ADC and peaks data formats"""
+        result = load_csv()
+        if result[0] is None:
+            return
+
+        data, filename, data_type = result
+        self.filename = os.path.basename(filename)
+
+        if data_type == "adc":
+            self.data = data
+            self.data_type = "adc"
+            self.peaks_data = None  # Clear any existing peaks data
+            self.update_analysis()
+        elif data_type == "peaks":
+
+            self.peaks_data = data
+            self.plot_peaks_only()
+            return
+
         self.root.title(f"Advanced Signal Analyzer - {self.filename}")
         self.title_label.config(text=f"Advanced Signal Analyzer - {self.filename}")
 
+    def plot_peaks_only(self):
+
+        if self.peaks_data is None:
+            messagebox.showinfo("Info", "No peaks data loaded.")
+            return
+
+        # Clear previous plots
+        self.ax1.cla()
+        self.ax2.cla()
+
+        # Plot peaks based on their labels
+        for label, group in self.peaks_data.groupby("label"):
+            times = group["startTime"]  # Use startTime for x-axis
+            y_values = [1] * len(times)  # Assign a constant y-value for simplicity
+
+            # Assign colors and markers for each label
+            color = "red" if "ADC1" in label else "blue"
+            marker = "o" if "water" in label else "^"
+
+            # Plot markers on separate axes
+            ax = self.ax1 if "ADC1" in label else self.ax2
+            ax.scatter(times, y_values, label=label, color=color, marker=marker)
+
+        # Update plot legends and refresh canvas
+        self.ax1.legend(loc="upper right")
+        self.ax2.legend(loc="upper right")
+        self.fig.tight_layout()
+        self.canvas.draw_idle()
 
     def start_convert_to_npy(self):
-        #disable button
+        # disable button
 
         self.convert_button.config(state=tk.DISABLED)
         self.convert_button.config(text="Converting...")
@@ -163,9 +255,7 @@ class SignalAnalyzer:
         downsampled_data = self.data.iloc[::downsample_rate]
 
         # Time vector (in seconds)
-        time = np.arange(len(downsampled_data)) / (
-                self.sample_rate / downsample_rate
-        )
+        time = np.arange(len(downsampled_data)) / (self.sample_rate / downsample_rate)
 
         # Plot raw ADC1 and ADC2 data
         self.ax1.plot(time, downsampled_data["adc1"], "b-", label="ADC1")
@@ -175,15 +265,14 @@ class SignalAnalyzer:
         self.fig.tight_layout()
         self.canvas.draw_idle()
 
-
     def get_peak_params(self):
         """Get peak detection parameters from GUI inputs"""
         try:
             params = {
                 "prominence_threshold": float(self.prominence_threshold.get()),
                 "amplitude_tolerance": float(self.amplitude_tolerance.get()),
-                "high_threshold": float(self.high_threshold.get()),
-                "medium_threshold": float(self.medium_threshold.get()),
+                "high_threshold": float(self.high_threshold.get()) / 100,
+                "medium_threshold": float(self.medium_threshold.get()) / 100,
             }
             return params
         except ValueError as e:
@@ -191,13 +280,12 @@ class SignalAnalyzer:
             return None
 
     def update_analysis(self):
-        if self.data is None:
+        if self.data is None or self.data_type != "adc":
             return
 
         try:
-            # Get filter parameters
             window = int(self.window_length.get())
-            if window % 2 == 0:
+            if window % 2 == 0:  # Ensure window length is odd
                 window += 1
             poly_order = int(self.poly_order.get())
 
@@ -358,6 +446,9 @@ class SignalAnalyzer:
             self.fig.tight_layout()
             self.canvas.draw_idle()
 
+            if self.peaks_data is not None:
+                self.plot_with_peaks()
+
         except Exception as e:
             messagebox.showerror("Error", f"Error updating analysis: {str(e)}")
             raise  # This will help with debugging by showing the full error traceback
@@ -396,10 +487,8 @@ class SignalAnalyzer:
                 self.sample_rate / downsample_rate
             )
 
-
             filtered_adc1 = process_signal(downsampled_data["adc1"], window, poly_order)
             filtered_adc2 = process_signal(downsampled_data["adc2"], window, poly_order)
-
 
             peaks_adc1, properties_adc1 = find_signal_peaks(filtered_adc1, peak_params)
             peaks_adc2, properties_adc2 = find_signal_peaks(filtered_adc2, peak_params)
@@ -407,15 +496,16 @@ class SignalAnalyzer:
             # Create list for peak data
             peaks_data = []
 
-
-            def get_label(channel, peak_class):     #Helper function to classify found peaks down to two categories
+            def get_label(
+                channel, peak_class
+            ):  # Helper function to classify found peaks down to two categories
                 # If peak is low (below medium threshold), label as water
                 # If peak is medium or high, label as tissue
                 return (
                     f"{channel}_water" if peak_class == "low" else f"{channel}_tissue"
                 )
 
-            #ADC1 peaks
+            # ADC1 peaks
             if len(peaks_adc1) > 0:
                 for peak_idx, peak_class in zip(
                     peaks_adc1, properties_adc1["peak_classifications"]
@@ -429,7 +519,7 @@ class SignalAnalyzer:
                         }
                     )
 
-            #ADC2 peaks
+            # ADC2 peaks
             if len(peaks_adc2) > 0:
                 for peak_idx, peak_class in zip(
                     peaks_adc2, properties_adc2["peak_classifications"]
@@ -443,18 +533,18 @@ class SignalAnalyzer:
                         }
                     )
 
-            #Sort by start time
+            # Sort by start time
             import pandas as pd
 
             peaks_df = pd.DataFrame(peaks_data)
             peaks_df = peaks_df.sort_values("startTime")
 
-            #Doublecheck that timestamps are rounded correctly
+            # Doublecheck that timestamps are rounded correctly
             peaks_df.to_csv(save_path, index=False, float_format="%.5f")
 
             messagebox.showinfo(
                 "Success", f"Peaks data exported successfully to {save_path}"
             )
 
-        except Exception as e: #Whoopsie daisies moment
+        except Exception as e:  # Whoopsie daisies moment
             messagebox.showerror("Error", f"Error exporting peaks: {str(e)}")
