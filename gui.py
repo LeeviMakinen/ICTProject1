@@ -81,7 +81,7 @@ class SignalAnalyzer:
         # Prominence control
         ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
         self.prominence_threshold = tk.Scale(
-            peak_frame, from_=0.1, to=10.0, resolution=0.1, orient=HORIZONTAL
+            peak_frame, from_=0.01, to=10.0, resolution=0.1, orient=HORIZONTAL
         )
         self.prominence_threshold.set(0.1)
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
@@ -103,7 +103,7 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
         self.high_threshold = tk.Scale(
-            threshold_frame, from_=10, to=100, resolution=1, orient=HORIZONTAL
+            threshold_frame, from_=10, to=100, resolution=0.1, orient=HORIZONTAL
         )
         self.high_threshold.set(30)  # Default value
         self.high_threshold.pack(side=tk.LEFT, padx=5)
@@ -113,7 +113,7 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
         self.medium_threshold = tk.Scale(
-            threshold_frame, from_=1, to=50, resolution=1, orient=HORIZONTAL
+            threshold_frame, from_=0.1, to=50, resolution=0.1, orient=HORIZONTAL
         )
         self.medium_threshold.set(9)  # Default value
         self.medium_threshold.pack(side=tk.LEFT, padx=5)
@@ -622,6 +622,3 @@ class SignalAnalyzer:
 
         except Exception as e:  # Whoopsie daisies moment
             messagebox.showerror("Error", f"Error exporting peaks: {str(e)}")
-
-
-
