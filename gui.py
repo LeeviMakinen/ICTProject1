@@ -179,7 +179,7 @@ class SignalAnalyzer:
             self.data = data
             self.data_type = "adc"
             self.peaks_data = None  # Clear any existing peaks data
-            self.update_analysis()
+            #self.update_analysis()
         elif data_type == "peaks":
 
             self.peaks_data = data
@@ -218,6 +218,80 @@ class SignalAnalyzer:
         self.fig.tight_layout()
         self.canvas.draw_idle()
 
+
+    def plot_with_peaks(self):
+        """Plot current signal data with overlaid peaks"""
+        if self.data is None:
+            return
+
+        # Clear previous lines on the axes
+        self.ax1.cla()
+        self.ax2.cla()
+
+        # Perform regular signal update first
+        self.update_analysis()
+
+        # Plot imported peaks
+        colors = {
+            'ADC1_water': 'cyan',
+            'ADC1_tissue': 'magenta',
+            'ADC2_water': 'lime',
+            'ADC2_tissue': 'red'
+        }
+
+        markers = {
+            'ADC1_water': 'v',
+            'ADC1_tissue': '^',
+            'ADC2_water': 'v',
+            'ADC2_tissue': '^'
+        }
+
+        # Convert time to indices for plotting
+        downsample_rate = 10
+        time = np.arange(len(self.data.iloc[::downsample_rate])) / (self.sample_rate / downsample_rate)
+
+        # Plot each type of peak
+        for label, group in self.peaks_data.groupby('label'):
+            if label not in colors:
+                continue
+
+            # Find nearest time indices for the peaks
+            peak_indices = [np.abs(time - t).argmin() for t in group['startTime']]
+
+            # Get corresponding y-values from filtered data
+            if label.startswith('ADC1'):
+                y_values = process_signal(
+                    self.data.iloc[::downsample_rate]['adc1'],
+                    int(self.window_length.get()),
+                    int(self.poly_order.get())
+                )[peak_indices]
+                ax = self.ax1
+            else:
+                y_values = process_signal(
+                    self.data.iloc[::downsample_rate]['adc2'],
+                    int(self.window_length.get()),
+                    int(self.poly_order.get())
+                )[peak_indices]
+                ax = self.ax2
+
+            # Plot the imported peaks
+            ax.plot(
+                group['startTime'],
+                y_values,
+                markers[label],
+                color=colors[label],
+                label=f'Imported {label}',
+                markersize=10,
+                alpha=0.7
+            )
+
+        # Update legends
+        self.ax1.legend(loc='upper right')
+        self.ax2.legend(loc='upper right')
+
+        # Refresh canvas
+        self.fig.tight_layout()
+        self.canvas.draw_idle()
     def start_convert_to_npy(self):
         # disable button
 
@@ -280,7 +354,7 @@ class SignalAnalyzer:
             return None
 
     def update_analysis(self):
-        if self.data is None or self.data_type != "adc":
+        if self.data is None:
             return
 
         try:
@@ -548,3 +622,6 @@ class SignalAnalyzer:
 
         except Exception as e:  # Whoopsie daisies moment
             messagebox.showerror("Error", f"Error exporting peaks: {str(e)}")
+
+
+

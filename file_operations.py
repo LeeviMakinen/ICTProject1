@@ -26,9 +26,7 @@ def load_csv():
         peaks_columns = {"startTime", "endTime", "label"}
         if peaks_columns.issubset(set(data.columns)):
             # Validate peaks data
-            if (
-                data[peaks_columns].isna().any().any()
-            ):              # This special sauce checks if data contains empty fields (NaN)
+            if not all(data[col].notna().all() for col in peaks_columns):       #This special sauce checks if there are empty values
                 raise ValueError("Peaks data contains missing values")
             return data, filename, "peaks"
 
