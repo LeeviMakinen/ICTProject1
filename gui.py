@@ -81,7 +81,7 @@ class SignalAnalyzer:
         # Prominence control
         ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
         self.prominence_threshold = tk.Scale(
-            peak_frame, from_=0.1, to=10.0, resolution=0.1, orient=HORIZONTAL
+            peak_frame, from_=0.01, to=10.0, resolution=0.1, orient=HORIZONTAL
         )
         self.prominence_threshold.set(0.1)
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
@@ -103,7 +103,7 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
         self.high_threshold = tk.Scale(
-            threshold_frame, from_=10, to=100, resolution=1, orient=HORIZONTAL
+            threshold_frame, from_=10, to=100, resolution=0.1, orient=HORIZONTAL
         )
         self.high_threshold.set(30)  # Default value
         self.high_threshold.pack(side=tk.LEFT, padx=5)
@@ -113,7 +113,7 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
         self.medium_threshold = tk.Scale(
-            threshold_frame, from_=1, to=50, resolution=1, orient=HORIZONTAL
+            threshold_frame, from_=0.1, to=50, resolution=0.1, orient=HORIZONTAL
         )
         self.medium_threshold.set(9)  # Default value
         self.medium_threshold.pack(side=tk.LEFT, padx=5)
@@ -174,12 +174,12 @@ class SignalAnalyzer:
 
         data, filename, data_type = result
         self.filename = os.path.basename(filename)
-
+        ##Muuta nämä erililliselle nappulalle
         if data_type == "adc":
             self.data = data
             self.data_type = "adc"
             self.peaks_data = None  # Clear any existing peaks data
-            self.update_analysis()
+            ##self.update_analysis()
         elif data_type == "peaks":
 
             self.peaks_data = data
@@ -280,7 +280,7 @@ class SignalAnalyzer:
             return None
 
     def update_analysis(self):
-        if self.data is None or self.data_type != "adc":
+        if self.data is None: ##or self.data_type != "adc": tämäkin varmaan sille import metodille
             return
 
         try:
