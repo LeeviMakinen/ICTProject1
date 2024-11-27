@@ -46,6 +46,9 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
 
+
+
+
         # Defining the conversion button for specific actions in a later function
         self.convert_button = ttk.Button(
             file_frame, text="Convert to NPY", command=self.start_convert_to_npy
@@ -134,6 +137,10 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
         # Button for exporting to csv file after analysis
+        # Add Import Peaks button
+        ttk.Button(file_frame, text="Import Peaks", command=self.import_peaks).pack(
+            side=tk.LEFT, padx=5
+        )
 
         # Create the main figure and add toolbar
         self.setup_plots()
@@ -180,14 +187,31 @@ class SignalAnalyzer:
             self.data_type = "adc"
             self.peaks_data = None  # Clear any existing peaks data
             #self.update_analysis()
-        elif data_type == "peaks":
 
-            self.peaks_data = data
-            self.plot_peaks_only()
-            return
 
         self.root.title(f"Advanced Signal Analyzer - {self.filename}")
         self.title_label.config(text=f"Advanced Signal Analyzer - {self.filename}")
+
+    def import_peaks(self):
+        """Specifically import peaks data from a CSV file"""
+        result = load_csv()
+        if result[0] is None:
+            return
+
+        data, filename, data_type = result
+
+        if data_type == "peaks":
+            self.peaks_data = data
+            self.filename = os.path.basename(filename)
+
+            # Update window title and label with peaks filename
+            self.root.title(f"Advanced Signal Analyzer - Peaks: {self.filename}")
+            self.title_label.config(text=f"Advanced Signal Analyzer - Peaks: {self.filename}")
+
+            # Plot the imported peaks
+            self.plot_peaks_only()
+        else:
+            messagebox.showinfo("Info", "Please select a peaks CSV file.")
 
     def plot_peaks_only(self):
 
