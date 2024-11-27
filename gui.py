@@ -214,7 +214,6 @@ class SignalAnalyzer:
             messagebox.showinfo("Info", "Please select a peaks CSV file.")
 
     def plot_peaks_only(self):
-
         if self.peaks_data is None:
             messagebox.showinfo("Info", "No peaks data loaded.")
             return
@@ -223,18 +222,53 @@ class SignalAnalyzer:
         self.ax1.cla()
         self.ax2.cla()
 
-        # Plot peaks based on their labels
+        # Plot peaks based on their labels and connect them with lines
         for label, group in self.peaks_data.groupby("label"):
-            times = group["startTime"]  # Use startTime for x-axis
-            y_values = [1] * len(times)  # Assign a constant y-value for simplicity
+            # Sort peaks by their startTime to ensure proper line connection
+            group = group.sort_values("startTime")
 
-            # Assign colors and markers for each label
+            times = group["startTime"].values  # Use startTime for x-axis
+
+            # Assign y-values based on label type (0.5 for water peaks, 1 for tissue peaks)
+            if "water" in label:
+                y_values = [0.5] * len(times)  # Water peaks at y = 0.5
+                marker = "o"  # Marker for water peaks
+            else:
+                y_values = [1] * len(times)  # Tissue peaks (e.g., ADC1) at y = 1
+                marker = "^"  # Marker for non-water peaks (e.g., tissue)
+
+            # Assign colors based on label type (red for ADC1, blue for others)
             color = "red" if "ADC1" in label else "blue"
-            marker = "o" if "water" in label else "^"
 
-            # Plot markers on separate axes
+            # Select the appropriate axis
             ax = self.ax1 if "ADC1" in label else self.ax2
-            ax.scatter(times, y_values, label=label, color=color, marker=marker)
+
+            # Only assign label to the first plot on each axis
+            # Check if the label already exists in the legend, if not, add it
+            if label not in [item.get_label() for item in ax.get_legend_handles_labels()[0]]:
+                ax.scatter(times, y_values, label=label, color=color, marker=marker)
+            else:
+                ax.scatter(times, y_values, color=color, marker=marker)  # No label for subsequent plots
+
+            # Create a continuous x-axis by adding points between peaks with y=0
+            continuous_times = []
+            continuous_y = []
+
+            for i in range(1, len(times)):
+                continuous_times.append(times[i - 1])
+                continuous_y.append(y_values[i - 1])  # Peak value for the current peak
+
+                # Add a "gap" between peaks
+                gap_start = times[i - 1]
+                gap_end = times[i]
+                continuous_times.extend([gap_start, gap_end])
+                continuous_y.extend([0, 0])  # Y value for gap is 0
+
+            continuous_times.append(times[-1])  # Add the last peak
+            continuous_y.append(y_values[-1])
+
+            # Plot the continuous line connecting peaks and gaps
+            ax.plot(continuous_times, continuous_y, color=color, linestyle='-', linewidth=0.8, alpha=0.7)
 
         # Update plot legends and refresh canvas
         self.ax1.legend(loc="upper right")
@@ -242,80 +276,6 @@ class SignalAnalyzer:
         self.fig.tight_layout()
         self.canvas.draw_idle()
 
-
-    def plot_with_peaks(self):
-        """Plot current signal data with overlaid peaks"""
-        if self.data is None:
-            return
-
-        # Clear previous lines on the axes
-        self.ax1.cla()
-        self.ax2.cla()
-
-        # Perform regular signal update first
-        self.update_analysis()
-
-        # Plot imported peaks
-        colors = {
-            'ADC1_water': 'cyan',
-            'ADC1_tissue': 'magenta',
-            'ADC2_water': 'lime',
-            'ADC2_tissue': 'red'
-        }
-
-        markers = {
-            'ADC1_water': 'v',
-            'ADC1_tissue': '^',
-            'ADC2_water': 'v',
-            'ADC2_tissue': '^'
-        }
-
-        # Convert time to indices for plotting
-        downsample_rate = 10
-        time = np.arange(len(self.data.iloc[::downsample_rate])) / (self.sample_rate / downsample_rate)
-
-        # Plot each type of peak
-        for label, group in self.peaks_data.groupby('label'):
-            if label not in colors:
-                continue
-
-            # Find nearest time indices for the peaks
-            peak_indices = [np.abs(time - t).argmin() for t in group['startTime']]
-
-            # Get corresponding y-values from filtered data
-            if label.startswith('ADC1'):
-                y_values = process_signal(
-                    self.data.iloc[::downsample_rate]['adc1'],
-                    int(self.window_length.get()),
-                    int(self.poly_order.get())
-                )[peak_indices]
-                ax = self.ax1
-            else:
-                y_values = process_signal(
-                    self.data.iloc[::downsample_rate]['adc2'],
-                    int(self.window_length.get()),
-                    int(self.poly_order.get())
-                )[peak_indices]
-                ax = self.ax2
-
-            # Plot the imported peaks
-            ax.plot(
-                group['startTime'],
-                y_values,
-                markers[label],
-                color=colors[label],
-                label=f'Imported {label}',
-                markersize=10,
-                alpha=0.7
-            )
-
-        # Update legends
-        self.ax1.legend(loc='upper right')
-        self.ax2.legend(loc='upper right')
-
-        # Refresh canvas
-        self.fig.tight_layout()
-        self.canvas.draw_idle()
     def start_convert_to_npy(self):
         # disable button
 
@@ -589,7 +549,6 @@ class SignalAnalyzer:
 
             peaks_adc1, properties_adc1 = find_signal_peaks(filtered_adc1, peak_params)
             peaks_adc2, properties_adc2 = find_signal_peaks(filtered_adc2, peak_params)
-
             # Create list for peak data
             peaks_data = []
 
