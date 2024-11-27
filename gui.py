@@ -544,8 +544,7 @@ class SignalAnalyzer:
             self.fig.tight_layout()
             self.canvas.draw_idle()
 
-            if self.peaks_data is not None:
-                self.plot_with_peaks()
+
 
         except Exception as e:
             messagebox.showerror("Error", f"Error updating analysis: {str(e)}")
