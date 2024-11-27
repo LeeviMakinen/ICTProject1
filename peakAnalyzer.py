@@ -80,6 +80,8 @@ class PeakDetector:
         baseline = np.percentile(smoothed, 20)  # Use 20th percentile as baseline
         return smoothed - baseline
 
+
+## Muuta tätä jos signaalin arvot pienet
     def _find_initial_peaks(self, signal, min_prominence_pct, noise_floor):
         """Find initial peaks using dynamic thresholding"""
         # Calculate signal range excluding outliers
@@ -88,12 +90,12 @@ class PeakDetector:
         # Dynamic prominence threshold
         min_prominence = max(
             signal_range * (min_prominence_pct / 100),
-            noise_floor * 2,  # Ensure minimum separation from noise
+            noise_floor * 2,  # Ensure minimum separation from noise, laita pienemmäksi jos signaalissä pieniä arvoeroja
         )
 
         # Find peaks with adaptive parameters
         peaks, _ = find_peaks(
-            signal, prominence=min_prominence, distance=int(self.expected_period * 0.5)
+            signal, prominence=min_prominence, distance=int(self.expected_period * 0.5) ## laita pienemmäksi jos signaalissa pieniä arvoeroja
         )
 
         return peaks
