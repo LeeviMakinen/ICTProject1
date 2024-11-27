@@ -222,6 +222,10 @@ class SignalAnalyzer:
         self.ax1.cla()
         self.ax2.cla()
 
+        # Define constants for peak classifications
+        WATER_Y_VALUE = 0.5
+        TISSUE_Y_VALUE = 1
+
         # Plot peaks based on their labels and connect them with lines
         for label, group in self.peaks_data.groupby("label"):
             # Sort peaks by their startTime to ensure proper line connection
@@ -230,25 +234,24 @@ class SignalAnalyzer:
             times = group["startTime"].values  # Use startTime for x-axis
 
             # Assign y-values based on label type (0.5 for water peaks, 1 for tissue peaks)
-            if "water" in label:
-                y_values = [0.5] * len(times)  # Water peaks at y = 0.5
+            if label == "water":
+                y_values = [WATER_Y_VALUE] * len(times)  # Water peaks at y = 0.5
                 marker = "o"  # Marker for water peaks
-            else:
-                y_values = [1] * len(times)  # Tissue peaks (e.g., ADC1) at y = 1
-                marker = "^"  # Marker for non-water peaks (e.g., tissue)
+                color = "blue"  # Color for water peaks (arbitrary choice)
+            else:  # Tissue label
+                y_values = [TISSUE_Y_VALUE] * len(times)  # Tissue peaks at y = 1
+                marker = "^"  # Marker for tissue peaks
+                color = "red"  # Color for tissue peaks (arbitrary choice)
 
-            # Assign colors based on label type (red for ADC1, blue for others)
-            color = "red" if "ADC1" in label else "blue"
+            # Assign the same axis for all peaks, as ADC1/ADC2 is no longer relevant
+            ax = self.ax1  # Use ax1 for both water and tissue peaks
 
-            # Select the appropriate axis
-            ax = self.ax1 if "ADC1" in label else self.ax2
-
-            # Only assign label to the first plot on each axis
-            # Check if the label already exists in the legend, if not, add it
-            if label not in [item.get_label() for item in ax.get_legend_handles_labels()[0]]:
+            # Only add label for the first occurrence of each label in the legend
+            legend_labels = [item.get_label() for item in ax.get_legend_handles_labels()[0]]
+            if label not in legend_labels:
                 ax.scatter(times, y_values, label=label, color=color, marker=marker)
             else:
-                ax.scatter(times, y_values, color=color, marker=marker)  # No label for subsequent plots
+                ax.scatter(times, y_values, color=color, marker=marker)
 
             # Create a continuous x-axis by adding points between peaks with y=0
             continuous_times = []
@@ -272,7 +275,6 @@ class SignalAnalyzer:
 
         # Update plot legends and refresh canvas
         self.ax1.legend(loc="upper right")
-        self.ax2.legend(loc="upper right")
         self.fig.tight_layout()
         self.canvas.draw_idle()
 
@@ -541,7 +543,7 @@ class SignalAnalyzer:
             downsample_rate = 10
             downsampled_data = self.data.iloc[::downsample_rate]
             time = np.arange(len(downsampled_data)) / (
-                self.sample_rate / downsample_rate
+                    self.sample_rate / downsample_rate
             )
 
             filtered_adc1 = process_signal(downsampled_data["adc1"], window, poly_order)
@@ -549,43 +551,40 @@ class SignalAnalyzer:
 
             peaks_adc1, properties_adc1 = find_signal_peaks(filtered_adc1, peak_params)
             peaks_adc2, properties_adc2 = find_signal_peaks(filtered_adc2, peak_params)
+
             # Create list for peak data
             peaks_data = []
 
-            def get_label(
-                channel, peak_class
-            ):  # Helper function to classify found peaks down to two categories
+            def get_label(peak_class):  # Helper function to classify found peaks
                 # If peak is low (below medium threshold), label as water
                 # If peak is medium or high, label as tissue
-                return (
-                    f"{channel}_water" if peak_class == "low" else f"{channel}_tissue"
-                )
+                return "water" if peak_class == "low" else "tissue"
 
             # ADC1 peaks
             if len(peaks_adc1) > 0:
                 for peak_idx, peak_class in zip(
-                    peaks_adc1, properties_adc1["peak_classifications"]
+                        peaks_adc1, properties_adc1["peak_classifications"]
                 ):
                     peak_time = round(time[peak_idx], 5)  # Round to 5 decimal places
                     peaks_data.append(
                         {
                             "startTime": peak_time,
                             "endTime": peak_time,
-                            "label": get_label("ADC1", peak_class),
+                            "label": get_label(peak_class),
                         }
                     )
 
             # ADC2 peaks
             if len(peaks_adc2) > 0:
                 for peak_idx, peak_class in zip(
-                    peaks_adc2, properties_adc2["peak_classifications"]
+                        peaks_adc2, properties_adc2["peak_classifications"]
                 ):
                     peak_time = round(time[peak_idx], 5)  # Round to 5 decimal places
                     peaks_data.append(
                         {
                             "startTime": peak_time,
                             "endTime": peak_time,
-                            "label": get_label("ADC2", peak_class),
+                            "label": get_label(peak_class),
                         }
                     )
 
