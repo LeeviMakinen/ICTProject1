@@ -84,7 +84,7 @@ class SignalAnalyzer:
         # Prominence control
         ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
         self.prominence_threshold = tk.Scale(
-            peak_frame, from_=0.01, to=10.0, resolution=0.1, orient=HORIZONTAL
+            peak_frame, from_=0.01, to=100.0, resolution=0.01, orient=HORIZONTAL
         )
         self.prominence_threshold.set(0.1)
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
@@ -159,7 +159,7 @@ class SignalAnalyzer:
         default_values = {
             "window_length": 31,
             "poly_order": 2,
-            "prominence_threshold": 0.1,
+            "prominence_threshold": 0.01,
             "amplitude_tolerance": 4.0,
             "high_threshold": 30,
             "medium_threshold": 9,
@@ -361,6 +361,7 @@ class SignalAnalyzer:
             # Increase downsample rate if needed
             downsample_rate = 10
             downsampled_data = self.data.iloc[::downsample_rate]
+
 
             # Time vector (in seconds)
             time = np.arange(len(downsampled_data)) / (
