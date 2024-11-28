@@ -83,7 +83,7 @@ class SignalAnalyzer:
         self.prominence_threshold = tk.Scale(
             peak_frame, from_=0.01, to=100.0, resolution=0.01, orient=HORIZONTAL
         )
-        self.prominence_threshold.set(0.1)
+        self.prominence_threshold.set(45)
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
 
         ttk.Label(peak_frame, text="Amp Tolerance (σ):").pack(side=tk.LEFT, padx=5)
@@ -185,8 +185,8 @@ class SignalAnalyzer:
             self.peaks_data = None  # Clear any existing peaks data
             # self.update_analysis()
 
-        self.root.title(f"Advanced Signal Analyzer - {self.filename}")
-        self.title_label.config(text=f"Advanced Signal Analyzer - {self.filename}")
+        self.root.title(f"Signal Analyzer - {self.filename}")
+        self.title_label.config(text=f"Signal Analyzer - {self.filename}")
 
     def import_peaks(self):
         """Specifically import peaks data from a CSV file"""
@@ -201,9 +201,9 @@ class SignalAnalyzer:
             self.filename = os.path.basename(filename)
 
             # Update window title and label with peaks filename
-            self.root.title(f"Advanced Signal Analyzer - Peaks: {self.filename}")
+            self.root.title(f"Signal Analyzer - Peaks: {self.filename}")
             self.title_label.config(
-                text=f"Advanced Signal Analyzer - Peaks: {self.filename}"
+                text=f"Signal Analyzer - Peaks: {self.filename}"
             )
 
             # Plot the imported peaks
@@ -307,8 +307,8 @@ class SignalAnalyzer:
     def load_npy(self):
         self.data, self.filename = load_npy()
         self.filename = os.path.basename(self.filename)
-        self.root.title(f"Advanced Signal Analyzer - {self.filename}")
-        self.title_label.config(text=f"Advanced Signal Analyzer - {self.filename}")
+        self.root.title(f"Signal Analyzer - {self.filename}")
+        self.title_label.config(text=f"Signal Analyzer - {self.filename}")
 
         if self.data is None:
             return
