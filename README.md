@@ -1,7 +1,7 @@
 General information
 ===================
 
-This application is made for analyzing sensor data, and interpreting said data for result analysis. The main function of the application is to analyze datasets utilizing the Savitzky-Golary filter and provide visualizations based on analyzed data.
+This application is made for analyzing sensor data, and interpreting said data for result analysis. The main function of the application is to analyze datasets utilizing the Savitzky-Golay filter and provide visualizations based on analyzed data.
 Expected input data is produced by two distinct sensors, each polling at 50 000 samples per second. The expected input is a .csv or .npy file containing either the raw unanalyzed data in two columns (adc1,adc2), or a previously analyzed dataset with two timestamp columns and a label column (startTime,endTime,label). The intended use is for analysis of data obtained from medical instruments, but the application can analyze any data as long as it is provided with correctly formatted columns.
 
 The application can be used for analysis of the directly produced graphs, as well as converting the large direct datasets to a smaller, easily loadable size written to an .npy file before analysis.
