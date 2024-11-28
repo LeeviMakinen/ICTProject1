@@ -6,6 +6,8 @@ Expected input data is produced by two distinct sensors, each polling at 50 000 
 
 The application can be used for analysis of the directly produced graphs, as well as converting the large direct datasets to a smaller, easily loadable size written to an .npy file before analysis.
 
+![image](https://github.com/user-attachments/assets/0ecf75dd-0168-4fa3-9086-23b56385aadf)
+
 
 This application is built using Python 3.12, and requires the following additional libraries to function:
 
@@ -115,7 +117,7 @@ Flow 3: Open program > Import peaks
 
 **Note that the program does not support re-exporting a peak file that is loaded for visualization**
 
-
+**Note that if the peak values are relative low, you need to change "noise_floor * 2" and "self.expected_period * 0.5"  value to smaller by your self in the code. You will find them in def _find_initial_peaks, inside peak_Analyzer.py**
 
 
 
