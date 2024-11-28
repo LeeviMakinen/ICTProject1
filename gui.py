@@ -46,9 +46,6 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
 
-
-
-
         # Defining the conversion button for specific actions in a later function
         self.convert_button = ttk.Button(
             file_frame, text="Convert to NPY", command=self.start_convert_to_npy
@@ -186,8 +183,7 @@ class SignalAnalyzer:
             self.data = data
             self.data_type = "adc"
             self.peaks_data = None  # Clear any existing peaks data
-            #self.update_analysis()
-
+            # self.update_analysis()
 
         self.root.title(f"Advanced Signal Analyzer - {self.filename}")
         self.title_label.config(text=f"Advanced Signal Analyzer - {self.filename}")
@@ -206,7 +202,9 @@ class SignalAnalyzer:
 
             # Update window title and label with peaks filename
             self.root.title(f"Advanced Signal Analyzer - Peaks: {self.filename}")
-            self.title_label.config(text=f"Advanced Signal Analyzer - Peaks: {self.filename}")
+            self.title_label.config(
+                text=f"Advanced Signal Analyzer - Peaks: {self.filename}"
+            )
 
             # Plot the imported peaks
             self.plot_peaks_only()
@@ -247,7 +245,9 @@ class SignalAnalyzer:
             ax = self.ax1  # Use ax1 for both water and tissue peaks
 
             # Only add label for the first occurrence of each label in the legend
-            legend_labels = [item.get_label() for item in ax.get_legend_handles_labels()[0]]
+            legend_labels = [
+                item.get_label() for item in ax.get_legend_handles_labels()[0]
+            ]
             if label not in legend_labels:
                 ax.scatter(times, y_values, label=label, color=color, marker=marker)
             else:
@@ -271,7 +271,14 @@ class SignalAnalyzer:
             continuous_y.append(y_values[-1])
 
             # Plot the continuous line connecting peaks and gaps
-            ax.plot(continuous_times, continuous_y, color=color, linestyle='-', linewidth=0.8, alpha=0.7)
+            ax.plot(
+                continuous_times,
+                continuous_y,
+                color=color,
+                linestyle="-",
+                linewidth=0.8,
+                alpha=0.7,
+            )
 
         # Update plot legends and refresh canvas
         self.ax1.legend(loc="upper right")
@@ -361,7 +368,6 @@ class SignalAnalyzer:
             # Increase downsample rate if needed
             downsample_rate = 10
             downsampled_data = self.data.iloc[::downsample_rate]
-
 
             # Time vector (in seconds)
             time = np.arange(len(downsampled_data)) / (
@@ -507,8 +513,6 @@ class SignalAnalyzer:
             self.fig.tight_layout()
             self.canvas.draw_idle()
 
-
-
         except Exception as e:
             messagebox.showerror("Error", f"Error updating analysis: {str(e)}")
             raise  # This will help with debugging by showing the full error traceback
@@ -544,7 +548,7 @@ class SignalAnalyzer:
             downsample_rate = 10
             downsampled_data = self.data.iloc[::downsample_rate]
             time = np.arange(len(downsampled_data)) / (
-                    self.sample_rate / downsample_rate
+                self.sample_rate / downsample_rate
             )
 
             filtered_adc1 = process_signal(downsampled_data["adc1"], window, poly_order)
@@ -564,7 +568,7 @@ class SignalAnalyzer:
             # ADC1 peaks
             if len(peaks_adc1) > 0:
                 for peak_idx, peak_class in zip(
-                        peaks_adc1, properties_adc1["peak_classifications"]
+                    peaks_adc1, properties_adc1["peak_classifications"]
                 ):
                     peak_time = round(time[peak_idx], 5)  # Round to 5 decimal places
                     peaks_data.append(
@@ -578,7 +582,7 @@ class SignalAnalyzer:
             # ADC2 peaks
             if len(peaks_adc2) > 0:
                 for peak_idx, peak_class in zip(
-                        peaks_adc2, properties_adc2["peak_classifications"]
+                    peaks_adc2, properties_adc2["peak_classifications"]
                 ):
                     peak_time = round(time[peak_idx], 5)  # Round to 5 decimal places
                     peaks_data.append(
