@@ -83,7 +83,7 @@ class SignalAnalyzer:
         self.prominence_threshold = tk.Scale(
             peak_frame, from_=0.01, to=100.0, resolution=0.01, orient=HORIZONTAL
         )
-        self.prominence_threshold.set(45)
+        self.prominence_threshold.set(40)
         self.prominence_threshold.pack(side=tk.LEFT, padx=5)
 
         ttk.Label(peak_frame, text="Amp Tolerance (σ):").pack(side=tk.LEFT, padx=5)

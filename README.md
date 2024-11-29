@@ -118,7 +118,7 @@ Flow 3: Open program > Import peaks
 **Note that the program does not support re-exporting a peak file that is loaded for visualization**
 
 **Note that if the peak values are relative low, you need to change "noise_floor * 2" and "self.expected_period * 0.5"  values to smaller by your self in the code. You will find them in def _find_initial_peaks, inside peak_Analyzer.py**
-**Note that if some peaks are not getting detected and in the graph the peak is wider than the others you need to change "target_frequenc=2" on method "def find_signal_peaks" in signal_processing.py to be bigger number
+**Note that if some peaks are not getting detected and in the graph the peak is wider than the others you need to change "target_frequenc=2" on method "def find_signal_peaks" in signal_processing.py to be bigger number**
 
 
 
