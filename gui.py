@@ -32,15 +32,29 @@ class SignalAnalyzer:
         )
         self.title_label.pack(pady=5)
 
+        control_container = ttk.Frame(self.root)
+        control_container.pack(pady=5, padx=5, fill=tk.X, expand=True)
+
+        # For each frame, use fill and expand
+        file_frame = ttk.LabelFrame(control_container, text="File Operations")
+        file_frame.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+        filter_frame = ttk.LabelFrame(control_container, text="Filter Settings")
+        filter_frame.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+        peak_frame = ttk.LabelFrame(control_container, text="Peak Detection Parameters")
+        peak_frame.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+        action_frame = ttk.Frame(control_container)
+        action_frame.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
         # Custom title card for more control over colors
 
         # Main container for all controls
         control_container = ttk.Frame(self.root)
-        control_container.pack(pady=5, padx=5, fill=tk.X)
+        control_container.pack(pady=5, padx=5, fill=tk.X, expand=True)
 
-        # Left side - File operations
-        file_frame = ttk.LabelFrame(control_container, text="File Operations")
-        file_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
+
 
         ttk.Button(file_frame, text="Load CSV", command=self.load_csv).pack(
             side=tk.LEFT, padx=5
@@ -56,9 +70,7 @@ class SignalAnalyzer:
             side=tk.LEFT, padx=5
         )
 
-        # Center - Filter settings
-        filter_frame = ttk.LabelFrame(control_container, text="Filter Settings")
-        filter_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
+
 
         ttk.Label(filter_frame, text="Window Length:").pack(side=tk.LEFT, padx=5)
         self.window_length = tk.Scale(
@@ -74,9 +86,7 @@ class SignalAnalyzer:
         self.poly_order.set(2)  # Default value
         self.poly_order.pack(side=tk.LEFT, padx=5)
 
-        # Right side - Peak Detection Controls
-        peak_frame = ttk.LabelFrame(control_container, text="Peak Detection Parameters")
-        peak_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
+
 
         # Prominence control
         ttk.Label(peak_frame, text="Min Prominence (%):").pack(side=tk.LEFT, padx=5)
@@ -90,13 +100,13 @@ class SignalAnalyzer:
         self.amplitude_tolerance = tk.Scale(
             peak_frame, from_=1.0, to=10.0, resolution=0.1, orient=HORIZONTAL
         )
-        self.amplitude_tolerance.set(4.0)
+        self.amplitude_tolerance.set(6.0)
         self.amplitude_tolerance.pack(side=tk.LEFT, padx=5)
 
         threshold_frame = ttk.LabelFrame(
             control_container, text="Peak Classification Thresholds"
         )
-        threshold_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
+        threshold_frame.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
 
         # High threshold control
         ttk.Label(threshold_frame, text="High Peak Threshold:\n(% of max)").pack(
@@ -118,17 +128,16 @@ class SignalAnalyzer:
         self.medium_threshold.set(9)  # Default value
         self.medium_threshold.pack(side=tk.LEFT, padx=5)
 
-        action_frame = ttk.Frame(control_container)
-        action_frame.pack(side=tk.LEFT, padx=5, fill=tk.X)
+
         # Update button
         ttk.Button(
-            action_frame, text="Update Analysis", command=self.update_analysis
-        ).pack(side=tk.TOP, padx=5)
+            threshold_frame, text="Update Analysis", command=self.update_analysis
+        ).pack(side=tk.RIGHT, padx=5)
 
         reset_button = ttk.Button(
-            action_frame, text="Reset Defaults", command=self.reset_to_defaults
+            threshold_frame, text="Reset Defaults", command=self.reset_to_defaults
         )
-        reset_button.pack(side=tk.TOP, padx=5, pady=5)
+        reset_button.pack(side=tk.RIGHT, padx=5, pady=5)
 
         ttk.Button(file_frame, text="Export Peaks", command=self.export_peaks).pack(
             side=tk.LEFT, padx=5
