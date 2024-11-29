@@ -121,4 +121,7 @@ Flow 3: Open program > Import peaks
 **Note that if some peaks are not getting detected and in the graph the peak is wider than the others you need to change "target_frequenc=2" on method "def find_signal_peaks" in signal_processing.py to be bigger number**
 
 
+**This project may only be used for academic purposes. Commercial use is strictly prohibited without the author's permission.**
+
+
 
